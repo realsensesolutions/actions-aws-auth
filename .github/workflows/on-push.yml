@@ -1,0 +1,35 @@
+name: demo
+on:
+  push:
+    branches:
+      - main
+jobs:
+  deploy:
+    permissions: 
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: us-east-1
+          role-to-assume: ${{ secrets.ROLE_ARN }}
+          role-session-name: ${{ github.actor }}
+      - uses: alonch/actions-aws-auth@main
+        with: 
+          name: auth
+          domain: gha-auth.dev.realsense.ca
+      # - uses: alonch/actions-aws-image@main
+      #   id: image
+      #   with: 
+      #     name: webserver
+      #     docker-path: samples/app/
+      # - uses: alonch/actions-aws-webserver@main
+      #   with: 
+      #     name: webserver
+      #     port: 8080 
+      #     action: delete
+      #     domain: gha.dev.realsense.ca
+      #     container-image: ${{ steps.image.outputs.tag }}
+      #     public-path: samples/app/public/

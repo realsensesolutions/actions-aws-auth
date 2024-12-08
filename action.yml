@@ -1,0 +1,38 @@
+name: 'Actions AWS Auth'
+description: 'Provision and AWS infra to Authenticate users'
+inputs:
+  action: 
+    description: "Desire outcome: deploy or delete"
+    required: false
+    default: "deploy"
+  name:
+    description: Identifier name
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Destroy infrastructure
+      if: ${{ inputs.action=='delete' }}
+      shell: bash
+      run: |
+        sam build
+        sam delete \
+        --no-prompts \
+        --stack-name auth-${{ inputs.name }}-${{ github.repository_id }}
+
+    - name: Applying infrastructure 🚀
+      if: ${{ inputs.action=='deploy' }}
+      shell: bash
+      run: |
+        sam build
+        sam deploy \
+        --resolve-s3 true \
+        --stack-name auth-${{ inputs.name }}-${{ github.repository_id }} \
+        --capabilities CAPABILITY_IAM \
+        --no-confirm-changeset \
+        --no-fail-on-empty-changeset \
+        --parameter-overrides \
+        DomainName="${{ inputs.domain }}" \
+        DomainHostedZoneId="Z0674300MVO8RX9JHZFL"
+        
