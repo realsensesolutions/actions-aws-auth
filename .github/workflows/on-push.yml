@@ -16,7 +16,10 @@ jobs:
           aws-region: us-east-1
           role-to-assume: ${{ secrets.ROLE_ARN }}
           role-session-name: ${{ github.actor }}
-      - uses: alonch/actions-aws-website
+      - uses: alonch/actions-aws-backend-setup@main
+        with: 
+          instance: auth-demo
+      - uses: alonch/actions-aws-website@main
         with:
           domain: gha-auth.dev.realsense.ca
           content-path: sample
