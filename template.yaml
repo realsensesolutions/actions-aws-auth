@@ -51,7 +51,7 @@ Resources:
       UserPoolId: !Ref UserPool
       AllowedOAuthFlowsUserPoolClient: true
       CallbackURLs:
-        - !Sub "https://${SubDomainName}.${DomainName}/oauth2/idpresponse"
+        - !Sub "https://${DomainName}/oauth2/idpresponse"
       LogoutURLs:
         - "https://www.google.com"
       AllowedOAuthFlows:
