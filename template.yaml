@@ -4,44 +4,11 @@ Description: >-
 Transform:
 - AWS::Serverless-2016-10-31
 Parameters:
-  VPC:
-    Type: AWS::EC2::VPC::Id
-  SubnetA:
-    Type: AWS::EC2::Subnet::Id
-  SubnetB:
-    Type: AWS::EC2::Subnet::Id
   DomainName:
     Type: String
   DomainHostedZoneId:
     Type: String
-  SubDomainName:
-    Type: String
-    Default: api
-  Image:
-    Type: String
-    # Update with the Docker image. "You can use images in the Docker Hub registry or specify other repositories (repository-url/image:tag)."
-    Default: nginx:latest
-  ContainerPort:
-    Type: Number
-    Default: 80
-  LoadBalancerPort:
-    Type: Number
-    Default: 443
-  HealthCheckPath:
-    Type: String
-    Default: /
-  # for autoscaling
-  MinContainers:
-    Type: Number
-    Default: 1
-  # for autoscaling
-  MaxContainers:
-    Type: Number
-    Default: 3
-  # target CPU utilization (%)
-  AutoScalingTargetValue:
-    Type: Number
-    Default: 90
+
 Resources:
   Certificate:
     Type: AWS::CertificateManager::Certificate
