@@ -8,6 +8,9 @@ inputs:
   name:
     description: Identifier name
     required: true
+  domain:
+    description: Domain name
+    required: true
 
 runs:
   using: "composite"
