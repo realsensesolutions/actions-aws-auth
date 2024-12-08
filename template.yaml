@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: >-
-  actions-aws-webserver
+  actions-aws-auth
 Transform:
 - AWS::Serverless-2016-10-31
 Parameters:
@@ -75,3 +75,7 @@ Resources:
         HostedZoneId: Z2FDTNDATAQYW2
         DNSName: !GetAtt UserPoolDomain.CloudFrontDistribution
         EvaluateTargetHealth: false
+  ManagedLogin:
+    Type: AWS::Cognito::ManagedLoginBranding
+    Properties:
+      UserPoolId: !Ref UserPool
