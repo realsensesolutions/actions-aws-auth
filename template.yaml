@@ -79,3 +79,5 @@ Resources:
     Type: AWS::Cognito::ManagedLoginBranding
     Properties:
       UserPoolId: !Ref UserPool
+      UseCognitoProvidedValues: true
+      ClientId: !Sub ${UserPoolClient.ClientId}
