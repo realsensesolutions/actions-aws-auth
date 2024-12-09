@@ -83,7 +83,7 @@ Resources:
       ClientId: !Sub ${UserPoolClient.ClientId}
 Outputs:
   UserPoolArn:
-    Value: !Ref UserPool.Arn
+    Value: !Sub ${UserPool.Arn}
   ClientId:
     Value: !Sub ${UserPoolClient.ClientId}
   Certificate:
