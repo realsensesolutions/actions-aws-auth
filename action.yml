@@ -38,4 +38,11 @@ runs:
         --parameter-overrides \
         DomainName="${{ inputs.domain }}" \
         DomainHostedZoneId="Z0674300MVO8RX9JHZFL"
-        
+    - name: export UserPoolId and UserPoolClient
+      if: ${{ inputs.action=='deploy' }}
+      shell: bash
+      run: |
+        export UserPoolId=$(aws cloudformation describe-stacks --stack-name auth-${{ inputs.name }}-${{ github.repository_id }} --query "Stacks[0].Outputs[?OutputKey=='UserPoolId'].OutputValue" --output text)
+        export UserPoolClientId=$(aws cloudformation describe-stacks --stack-name auth-${{ inputs.name }}-${{ github.repository_id }} --query "Stacks[0].Outputs[?OutputKey=='UserPoolClientId'].OutputValue" --output text)
+        echo "UserPoolId=$UserPoolId" >> $GITHUB_ENV
+        echo "UserPoolClientId=$UserPoolClientId" >> $GITHUB_ENV
