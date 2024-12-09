@@ -45,6 +45,6 @@ runs:
       shell: bash
       run: |
         export UserPoolId=$(aws cloudformation describe-stacks --stack-name auth-${{ inputs.name }}-${{ github.repository_id }} --query "Stacks[0].Outputs[?OutputKey=='UserPoolId'].OutputValue" --output text)
-        export UserPoolClientId=$(aws cloudformation describe-stacks --stack-name auth-${{ inputs.name }}-${{ github.repository_id }} --query "Stacks[0].Outputs[?OutputKey=='UserPoolClientId'].OutputValue" --output text)
-        echo "UserPoolId=$UserPoolId" >> $GITHUB_ENV
-        echo "UserPoolClientId=$UserPoolClientId" >> $GITHUB_ENV
+        export UserPoolClientId=$(aws cloudformation describe-stacks --stack-name auth-${{ inputs.name }}-${{ github.repository_id }} --query "Stacks[0].Outputs[?OutputKey=='ClientId'].OutputValue" --output text)
+        echo "UserPoolId=${UserPoolId}" >> $GITHUB_ENV
+        echo "UserPoolClientId=${UserPoolClientId}" >> $GITHUB_ENV
