@@ -52,7 +52,7 @@ Resources:
       AllowedOAuthFlowsUserPoolClient: true
       CallbackURLs:
         - !Sub "https://${DomainName}/oauth2/idpresponse"
-        - !Sub "https://${DomainName}"
+        - !Sub "https://*.${DomainName}"
       LogoutURLs:
         - "https://www.google.com"
       AllowedOAuthFlows:
