@@ -16,6 +16,7 @@ runs:
   using: "composite"
   steps:
     - name: Destroy infrastructure
+      working-directory: ${{ github.action_path }}
       if: ${{ inputs.action=='delete' }}
       shell: bash
       run: |
@@ -25,6 +26,7 @@ runs:
         --stack-name auth-${{ inputs.name }}-${{ github.repository_id }}
 
     - name: Applying infrastructure 🚀
+      working-directory: ${{ github.action_path }}
       if: ${{ inputs.action=='deploy' }}
       shell: bash
       run: |
