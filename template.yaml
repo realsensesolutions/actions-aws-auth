@@ -85,6 +85,6 @@ Outputs:
   UserPoolId:
     Value: !Ref UserPool
   ClientId:
-    Value: !Ref UserPoolClient
+    Value: !Sub ${UserPoolClient.ClientId}
   Certificate:
     Value: !Ref Certificate
