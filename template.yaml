@@ -82,8 +82,8 @@ Resources:
       UseCognitoProvidedValues: true
       ClientId: !Sub ${UserPoolClient.ClientId}
 Outputs:
-  UserPoolId:
-    Value: !Ref UserPool
+  UserPoolArn:
+    Value: !Ref UserPool.Arn
   ClientId:
     Value: !Sub ${UserPoolClient.ClientId}
   Certificate:
