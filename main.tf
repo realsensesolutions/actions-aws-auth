@@ -82,5 +82,11 @@ resource "aws_cognito_user_pool_client" "this" {
   }
 }
 
+# Create User Pool Domain (using Cognito provided domain)
+resource "aws_cognito_user_pool_domain" "this" {
+  domain       = "${lower(local.user_pool_name)}-${random_id.suffix.hex}"
+  user_pool_id = aws_cognito_user_pool.this.id
+}
+
 # Note: Managed Login Branding is only available in CloudFormation, not Terraform
 # For now, we'll use the default Cognito UI styling
