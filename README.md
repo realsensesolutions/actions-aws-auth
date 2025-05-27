@@ -6,7 +6,7 @@ A GitHub Action that provisions AWS Cognito User Pools for authentication using 
 
 - 🔐 **Secure by Default**: Pre-configured with strong password policies and security settings
 - 🚀 **Simple Setup**: Minimal configuration required to get started
-- 🎨 **Cognito Hosted UI**: Automatically provisions Cognito's managed login interface
+- 🎨 **Cognito Authentication**: Direct integration with Cognito's authentication endpoints
 - 🔄 **OAuth 2.0 Support**: Full OAuth 2.0/OpenID Connect support with customizable flows
 - 📱 **Multi-Platform**: Works with web, mobile, and API applications
 - 🏗️ **Infrastructure as Code**: Uses Terraform for reliable, repeatable deployments
@@ -84,7 +84,7 @@ jobs:
 | `user_pool_arn` | ARN of the Cognito User Pool |
 | `client_id` | ID of the Cognito User Pool Client |
 | `client_secret` | Secret of the Cognito User Pool Client (sensitive) |
-| `cognito_domain` | Cognito provided domain URL for hosted UI |
+| `cognito_domain` | Cognito endpoint URL (e.g., https://cognito-idp.us-east-1.amazonaws.com/us-east-1_userPoolId) |
 
 ## What Gets Created
 
@@ -92,7 +92,6 @@ This action provisions the following AWS resources:
 
 - **Cognito User Pool** with email verification and strong password policy
 - **User Pool Client** with OAuth 2.0 configuration
-- **User Pool Domain** using Cognito's provided domain (e.g., `your-app-12345.auth.us-east-1.amazoncognito.com`)
 
 ### Default Configuration
 
@@ -129,8 +128,8 @@ This action provisions the following AWS resources:
 ## Authentication Flow
 
 1. **User Registration/Login**: Users visit your app and click "Login"
-2. **Redirect to Cognito**: App redirects to `${{ outputs.cognito_domain }}/login`
-3. **Authentication**: User authenticates via Cognito's hosted UI
+2. **Redirect to Cognito**: App redirects to the Cognito authentication endpoint
+3. **Authentication**: User authenticates via Cognito
 4. **Callback**: Cognito redirects back to your app with authorization code
 5. **Token Exchange**: Your app exchanges code for JWT tokens
 
@@ -195,8 +194,8 @@ Enable debug output by setting the `ACTIONS_STEP_DEBUG` secret to `true` in your
 
 ## Limitations
 
-- **Custom Domains**: This action uses Cognito's provided domain. Custom domains require additional setup
-- **Advanced Branding**: Uses default Cognito UI styling (custom branding requires CloudFormation)
+- **Custom Domains**: This action uses the direct Cognito endpoint URL
+- **Advanced Branding**: Uses default Cognito authentication flow
 - **Region**: Resources are created in the AWS region specified in your credentials
 
 ## Contributing

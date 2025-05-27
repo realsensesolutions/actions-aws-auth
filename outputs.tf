@@ -20,6 +20,6 @@ output "client_secret" {
 }
 
 output "cognito_domain" {
-  description = "Cognito provided domain URL"
-  value       = "https://${aws_cognito_user_pool_domain.this.domain}.auth.${data.aws_region.current.name}.amazoncognito.com"
+  description = "Cognito endpoint URL"
+  value       = "https://cognito-idp.${data.aws_region.current.name}.amazonaws.com/${aws_cognito_user_pool.this.id}"
 }
