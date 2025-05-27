@@ -1,50 +1,131 @@
-name: 'Actions AWS Auth'
-description: 'Provision and AWS infra to Authenticate users'
+name: 'AWS Cognito Auth'
+description: 'Provision AWS Cognito User Pool for authentication using Terraform'
+author: 'alonch'
+branding:
+  icon: 'shield'
+  color: 'blue'
+
 inputs:
-  action: 
-    description: "Desire outcome: deploy or delete"
+  action:
+    description: 'Desired outcome: apply, plan or destroy'
     required: false
-    default: "deploy"
+    default: 'apply'
   name:
-    description: Identifier name
+    description: 'Cognito User Pool name - will be used as the Name tag'
     required: true
-  domain:
-    description: Domain name
-    required: true
+  callback_urls:
+    description: 'Comma-separated list of callback URLs for OAuth'
+    required: false
+    default: 'https://example.com/callback'
+  logout_urls:
+    description: 'Comma-separated list of logout URLs for OAuth'
+    required: false
+    default: 'https://example.com'
+
+outputs:
+  user_pool_id:
+    description: 'ID of the Cognito User Pool'
+    value: ${{ steps.outputs.outputs.user_pool_id }}
+  user_pool_arn:
+    description: 'ARN of the Cognito User Pool'
+    value: ${{ steps.outputs.outputs.user_pool_arn }}
+  client_id:
+    description: 'ID of the Cognito User Pool Client'
+    value: ${{ steps.outputs.outputs.client_id }}
+  client_secret:
+    description: 'Secret of the Cognito User Pool Client'
+    value: ${{ steps.outputs.outputs.client_secret }}
+  cognito_domain:
+    description: 'Cognito provided domain URL'
+    value: ${{ steps.outputs.outputs.cognito_domain }}
 
 runs:
   using: "composite"
   steps:
-    - name: Destroy infrastructure
-      working-directory: ${{ github.action_path }}
-      if: ${{ inputs.action=='delete' }}
-      shell: bash
+    - name: Terraform init for apply/plan
+      if: inputs.action != 'destroy'
       run: |
-        sam build
-        sam delete \
-        --no-prompts \
-        --stack-name auth-${{ inputs.name }}-${{ github.repository_id }}
+        terraform init \
+          -backend-config="bucket=$TF_BACKEND_s3" \
+          -backend-config="dynamodb_table=$TF_BACKEND_dynamodb" \
+          -backend-config="key=$TF_BACKEND_key"
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      env:
+        TF_BACKEND_key: "actions-aws-auth/${{ inputs.name }}"
+        TF_VAR_name: ${{ inputs.name }}
+        TF_VAR_callback_urls: ${{ inputs.callback_urls }}
+        TF_VAR_logout_urls: ${{ inputs.logout_urls }}
 
-    - name: Applying infrastructure 🚀
+    - name: Terraform plan
+      if: inputs.action == 'plan'
+      run: terraform plan
+      shell: bash
       working-directory: ${{ github.action_path }}
-      if: ${{ inputs.action=='deploy' }}
+      env:
+        TF_VAR_name: ${{ inputs.name }}
+        TF_VAR_callback_urls: ${{ inputs.callback_urls }}
+        TF_VAR_logout_urls: ${{ inputs.logout_urls }}
+
+    - name: Terraform init and destroy
+      if: inputs.action == 'destroy'
+      run: |
+        echo "Initializing Terraform for destroy operation..."
+        terraform init \
+          -backend-config="bucket=$TF_BACKEND_s3" \
+          -backend-config="dynamodb_table=$TF_BACKEND_dynamodb" \
+          -backend-config="key=$TF_BACKEND_key"
+
+        echo "Destroying resources..."
+        terraform destroy -auto-approve
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      env:
+        TF_BACKEND_key: "actions-aws-auth/${{ inputs.name }}"
+        TF_VAR_name: ${{ inputs.name }}
+        TF_VAR_callback_urls: ${{ inputs.callback_urls }}
+        TF_VAR_logout_urls: ${{ inputs.logout_urls }}
+
+    - name: Terraform apply
+      id: terraform
+      if: inputs.action == 'apply'
+      run: |
+        terraform apply -auto-approve
+        USER_POOL_ID=$(terraform output -raw user_pool_id | tr -d '\r\n')
+        USER_POOL_ARN=$(terraform output -raw user_pool_arn | tr -d '\r\n')
+        CLIENT_ID=$(terraform output -raw client_id | tr -d '\r\n')
+        CLIENT_SECRET=$(terraform output -raw client_secret | tr -d '\r\n')
+        COGNITO_DOMAIN=$(terraform output -raw cognito_domain | tr -d '\r\n')
+
+        # Set outputs temporarily
+        echo "user_pool_id=$USER_POOL_ID" >> "$GITHUB_OUTPUT"
+        echo "user_pool_arn=$USER_POOL_ARN" >> "$GITHUB_OUTPUT"
+        echo "client_id=$CLIENT_ID" >> "$GITHUB_OUTPUT"
+        echo "client_secret=$CLIENT_SECRET" >> "$GITHUB_OUTPUT"
+        echo "cognito_domain=$COGNITO_DOMAIN" >> "$GITHUB_OUTPUT"
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      env:
+        TF_VAR_name: ${{ inputs.name }}
+        TF_VAR_callback_urls: ${{ inputs.callback_urls }}
+        TF_VAR_logout_urls: ${{ inputs.logout_urls }}
+
+    - name: Set final outputs
+      id: outputs
       shell: bash
       run: |
-        sam build
-        sam deploy \
-        --resolve-s3 true \
-        --stack-name auth-${{ inputs.name }}-${{ github.repository_id }} \
-        --capabilities CAPABILITY_IAM \
-        --no-confirm-changeset \
-        --no-fail-on-empty-changeset \
-        --parameter-overrides \
-        DomainName="${{ inputs.domain }}" \
-        DomainHostedZoneId="Z0674300MVO8RX9JHZFL"
-    - name: export UserPoolId and UserPoolClient
-      if: ${{ inputs.action=='deploy' }}
-      shell: bash
-      run: |
-        export UserPoolArn=$(aws cloudformation describe-stacks --stack-name auth-${{ inputs.name }}-${{ github.repository_id }} --query "Stacks[0].Outputs[?OutputKey=='UserPoolArn'].OutputValue" --output text)
-        export UserPoolClientId=$(aws cloudformation describe-stacks --stack-name auth-${{ inputs.name }}-${{ github.repository_id }} --query "Stacks[0].Outputs[?OutputKey=='ClientId'].OutputValue" --output text)
-        echo "UserPoolArn=${UserPoolArn}" >> $GITHUB_ENV
-        echo "UserPoolClientId=${UserPoolClientId}" >> $GITHUB_ENV
+        if [ "${{ inputs.action }}" == "destroy" ]; then
+          # For destroy action, we don't have meaningful outputs
+          echo "user_pool_id=destroyed" >> "$GITHUB_OUTPUT"
+          echo "user_pool_arn=destroyed" >> "$GITHUB_OUTPUT"
+          echo "client_id=destroyed" >> "$GITHUB_OUTPUT"
+          echo "client_secret=destroyed" >> "$GITHUB_OUTPUT"
+          echo "cognito_domain=destroyed" >> "$GITHUB_OUTPUT"
+        else
+          # Always use Terraform outputs for apply/plan actions
+          echo "user_pool_id=${{ steps.terraform.outputs.user_pool_id }}" >> "$GITHUB_OUTPUT"
+          echo "user_pool_arn=${{ steps.terraform.outputs.user_pool_arn }}" >> "$GITHUB_OUTPUT"
+          echo "client_id=${{ steps.terraform.outputs.client_id }}" >> "$GITHUB_OUTPUT"
+          echo "client_secret=${{ steps.terraform.outputs.client_secret }}" >> "$GITHUB_OUTPUT"
+          echo "cognito_domain=${{ steps.terraform.outputs.cognito_domain }}" >> "$GITHUB_OUTPUT"
+        fi
