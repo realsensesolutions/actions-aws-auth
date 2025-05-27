@@ -21,7 +21,7 @@ jobs:
       - uses: alonch/actions-aws-backend-setup@main
         with: 
           instance: auth-demo
-      - uses: alonch/actions-aws-auth@main
+      - uses: ./
         with: 
           name: auth
           callback_urls: "https://example.com/callback"
