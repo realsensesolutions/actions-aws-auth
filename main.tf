@@ -6,11 +6,18 @@ resource "random_id" "suffix" {
   byte_length = 4
 }
 
+# Read branding settings from JSON file if provided
 locals {
   user_pool_name = var.name
   # Parse comma-separated URLs into lists
   callback_urls = split(",", var.callback_urls)
   logout_urls   = split(",", var.logout_urls)
+  
+  # Read branding settings from JSON file if provided
+  branding_settings = var.enable_managed_login_branding && var.branding_settings_file != "" ? jsondecode(file(var.branding_settings_file)) : {}
+  
+  # Parse branding assets from JSON string
+  branding_assets = var.enable_managed_login_branding ? jsondecode(var.branding_assets) : []
 }
 
 # Create Cognito User Pool
@@ -82,10 +89,37 @@ resource "aws_cognito_user_pool_client" "this" {
   }
 }
 
-# Create User Pool Domain (using Cognito provided domain)
+# Create User Pool Domain with managed login support
 resource "aws_cognito_user_pool_domain" "this" {
   domain       = "${lower(local.user_pool_name)}-${random_id.suffix.hex}"
   user_pool_id = aws_cognito_user_pool.this.id
+  
+  # Enable managed login version if branding is enabled
+  managed_login_version = var.enable_managed_login_branding ? 2 : null
+}
+
+# Create Managed Login Branding (only if enabled)
+resource "awscc_cognito_managed_login_branding" "this" {
+  count = var.enable_managed_login_branding ? 1 : 0
+
+  user_pool_id = aws_cognito_user_pool.this.id
+  
+  # Apply branding settings from JSON file
+  settings = local.branding_settings
+  
+  # Add branding assets
+  dynamic "assets" {
+    for_each = local.branding_assets
+    content {
+      category   = assets.value.category
+      extension  = assets.value.extension
+      bytes      = assets.value.bytes
+      color_mode = assets.value.color_mode
+    }
+  }
+
+  # Ensure domain is created first to enable managed login
+  depends_on = [aws_cognito_user_pool_domain.this]
 }
 
 # Note: Managed Login Branding is only available in CloudFormation, not Terraform

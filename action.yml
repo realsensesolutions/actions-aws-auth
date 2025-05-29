@@ -21,6 +21,18 @@ inputs:
     description: 'Comma-separated list of logout URLs for OAuth'
     required: false
     default: 'https://example.com'
+  enable_managed_login_branding:
+    description: 'Enable managed login branding for Cognito UI customization'
+    required: false
+    default: 'false'
+  branding_settings_file:
+    description: 'Path to JSON file containing branding settings for managed login'
+    required: false
+    default: ''
+  branding_assets:
+    description: 'JSON array of branding assets for managed login (max 15 assets)'
+    required: false
+    default: '[]'
 
 outputs:
   user_pool_id:
@@ -38,6 +50,18 @@ outputs:
   cognito_domain:
     description: 'Cognito provided domain URL'
     value: ${{ steps.outputs.outputs.cognito_domain }}
+  managed_login_branding_enabled:
+    description: 'Whether managed login branding is enabled'
+    value: ${{ steps.outputs.outputs.managed_login_branding_enabled }}
+  managed_login_version:
+    description: 'Managed login version used by the domain'
+    value: ${{ steps.outputs.outputs.managed_login_version }}
+  managed_login_branding_id:
+    description: 'ID of the managed login branding resource'
+    value: ${{ steps.outputs.outputs.managed_login_branding_id }}
+  hosted_ui_url:
+    description: 'Complete hosted UI URL for sign-in'
+    value: ${{ steps.outputs.outputs.hosted_ui_url }}
 
 runs:
   using: "composite"
@@ -56,6 +80,9 @@ runs:
         TF_VAR_name: ${{ inputs.name }}
         TF_VAR_callback_urls: ${{ inputs.callback_urls }}
         TF_VAR_logout_urls: ${{ inputs.logout_urls }}
+        TF_VAR_enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}
+        TF_VAR_branding_settings_file: ${{ inputs.branding_settings_file }}
+        TF_VAR_branding_assets: ${{ inputs.branding_assets }}
 
     - name: Terraform plan
       if: inputs.action == 'plan'
@@ -66,6 +93,9 @@ runs:
         TF_VAR_name: ${{ inputs.name }}
         TF_VAR_callback_urls: ${{ inputs.callback_urls }}
         TF_VAR_logout_urls: ${{ inputs.logout_urls }}
+        TF_VAR_enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}
+        TF_VAR_branding_settings_file: ${{ inputs.branding_settings_file }}
+        TF_VAR_branding_assets: ${{ inputs.branding_assets }}
 
     - name: Terraform init and destroy
       if: inputs.action == 'destroy'
@@ -85,6 +115,9 @@ runs:
         TF_VAR_name: ${{ inputs.name }}
         TF_VAR_callback_urls: ${{ inputs.callback_urls }}
         TF_VAR_logout_urls: ${{ inputs.logout_urls }}
+        TF_VAR_enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}
+        TF_VAR_branding_settings_file: ${{ inputs.branding_settings_file }}
+        TF_VAR_branding_assets: ${{ inputs.branding_assets }}
 
     - name: Terraform apply
       id: terraform
@@ -96,6 +129,10 @@ runs:
         CLIENT_ID=$(terraform output -raw client_id | tr -d '\r\n')
         CLIENT_SECRET=$(terraform output -raw client_secret | tr -d '\r\n')
         COGNITO_DOMAIN=$(terraform output -raw cognito_domain | tr -d '\r\n')
+        MANAGED_LOGIN_BRANDING_ENABLED=$(terraform output -raw managed_login_branding_enabled | tr -d '\r\n')
+        MANAGED_LOGIN_VERSION=$(terraform output -raw managed_login_version | tr -d '\r\n')
+        MANAGED_LOGIN_BRANDING_ID=$(terraform output -raw managed_login_branding_id | tr -d '\r\n')
+        HOSTED_UI_URL=$(terraform output -raw hosted_ui_url | tr -d '\r\n')
 
         # Set outputs temporarily
         echo "user_pool_id=$USER_POOL_ID" >> "$GITHUB_OUTPUT"
@@ -103,12 +140,19 @@ runs:
         echo "client_id=$CLIENT_ID" >> "$GITHUB_OUTPUT"
         echo "client_secret=$CLIENT_SECRET" >> "$GITHUB_OUTPUT"
         echo "cognito_domain=$COGNITO_DOMAIN" >> "$GITHUB_OUTPUT"
+        echo "managed_login_branding_enabled=$MANAGED_LOGIN_BRANDING_ENABLED" >> "$GITHUB_OUTPUT"
+        echo "managed_login_version=$MANAGED_LOGIN_VERSION" >> "$GITHUB_OUTPUT"
+        echo "managed_login_branding_id=$MANAGED_LOGIN_BRANDING_ID" >> "$GITHUB_OUTPUT"
+        echo "hosted_ui_url=$HOSTED_UI_URL" >> "$GITHUB_OUTPUT"
       shell: bash
       working-directory: ${{ github.action_path }}
       env:
         TF_VAR_name: ${{ inputs.name }}
         TF_VAR_callback_urls: ${{ inputs.callback_urls }}
         TF_VAR_logout_urls: ${{ inputs.logout_urls }}
+        TF_VAR_enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}
+        TF_VAR_branding_settings_file: ${{ inputs.branding_settings_file }}
+        TF_VAR_branding_assets: ${{ inputs.branding_assets }}
 
     - name: Set final outputs
       id: outputs
@@ -121,6 +165,10 @@ runs:
           echo "client_id=destroyed" >> "$GITHUB_OUTPUT"
           echo "client_secret=destroyed" >> "$GITHUB_OUTPUT"
           echo "cognito_domain=destroyed" >> "$GITHUB_OUTPUT"
+          echo "managed_login_branding_enabled=destroyed" >> "$GITHUB_OUTPUT"
+          echo "managed_login_version=destroyed" >> "$GITHUB_OUTPUT"
+          echo "managed_login_branding_id=destroyed" >> "$GITHUB_OUTPUT"
+          echo "hosted_ui_url=destroyed" >> "$GITHUB_OUTPUT"
         else
           # Always use Terraform outputs for apply/plan actions
           echo "user_pool_id=${{ steps.terraform.outputs.user_pool_id }}" >> "$GITHUB_OUTPUT"
@@ -128,4 +176,8 @@ runs:
           echo "client_id=${{ steps.terraform.outputs.client_id }}" >> "$GITHUB_OUTPUT"
           echo "client_secret=${{ steps.terraform.outputs.client_secret }}" >> "$GITHUB_OUTPUT"
           echo "cognito_domain=${{ steps.terraform.outputs.cognito_domain }}" >> "$GITHUB_OUTPUT"
+          echo "managed_login_branding_enabled=${{ steps.terraform.outputs.managed_login_branding_enabled }}" >> "$GITHUB_OUTPUT"
+          echo "managed_login_version=${{ steps.terraform.outputs.managed_login_version }}" >> "$GITHUB_OUTPUT"
+          echo "managed_login_branding_id=${{ steps.terraform.outputs.managed_login_branding_id }}" >> "$GITHUB_OUTPUT"
+          echo "hosted_ui_url=${{ steps.terraform.outputs.hosted_ui_url }}" >> "$GITHUB_OUTPUT"
         fi

@@ -4,6 +4,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+    awscc = {
+      source  = "hashicorp/awscc"
+      version = "~> 1.0"
+    }
     random = {
       source  = "hashicorp/random"
       version = "~> 3.0"
@@ -20,5 +24,10 @@ terraform {
 
 provider "aws" {
   # Default region for Cognito resources
+  region = "us-east-1"
+}
+
+provider "awscc" {
+  # AWSCC provider for managed login branding
   region = "us-east-1"
 }

@@ -7,6 +7,7 @@ A GitHub Action that provisions AWS Cognito User Pools for authentication using 
 - 🔐 **Secure by Default**: Pre-configured with strong password policies and security settings
 - 🚀 **Simple Setup**: Minimal configuration required to get started
 - 🎨 **Cognito Hosted UI**: Automatically provisions Cognito's managed login interface
+- ✨ **Custom Branding**: Support for AWS Cognito Managed Login branding with custom logos, colors, and settings
 - 🔄 **OAuth 2.0 Support**: Full OAuth 2.0/OpenID Connect support with customizable flows
 - 📱 **Multi-Platform**: Works with web, mobile, and API applications
 - 🏗️ **Infrastructure as Code**: Uses Terraform for reliable, repeatable deployments
@@ -67,6 +68,27 @@ jobs:
     action: apply
 ```
 
+### Advanced Example with Managed Login Branding
+
+```yaml
+- uses: alonch/actions-aws-auth@main
+  with:
+    name: branded-auth
+    callback_urls: "https://app.example.com/auth/callback,https://admin.example.com/callback"
+    logout_urls: "https://app.example.com,https://admin.example.com"
+    enable_managed_login_branding: true
+    branding_settings_file: "branding-settings.json"
+    branding_assets: |
+      [
+        {
+          "category": "LOGO",
+          "extension": "png",
+          "bytes": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+          "color_mode": "LIGHT"
+        }
+      ]
+```
+
 ## Inputs
 
 | Input | Description | Required | Default |
@@ -74,6 +96,9 @@ jobs:
 | `name` | Cognito User Pool name - used as the Name tag | ✅ Yes | - |
 | `callback_urls` | Comma-separated list of callback URLs for OAuth | ❌ No | `https://example.com/callback` |
 | `logout_urls` | Comma-separated list of logout URLs for OAuth | ❌ No | `https://example.com` |
+| `enable_managed_login_branding` | Enable managed login branding for custom UI | ❌ No | `false` |
+| `branding_settings_file` | Path to JSON file with branding settings | ❌ No | `""` |
+| `branding_assets` | JSON array of branding assets (max 15) | ❌ No | `[]` |
 | `action` | Desired outcome: `apply`, `plan`, or `destroy` | ❌ No | `apply` |
 
 ## Outputs
@@ -85,6 +110,10 @@ jobs:
 | `client_id` | ID of the Cognito User Pool Client |
 | `client_secret` | Secret of the Cognito User Pool Client (sensitive) |
 | `cognito_domain` | Cognito provided domain URL for hosted UI |
+| `managed_login_branding_enabled` | Whether managed login branding is enabled |
+| `managed_login_version` | Managed login version used by the domain |
+| `managed_login_branding_id` | ID of the managed login branding resource |
+| `hosted_ui_url` | Complete hosted UI URL for sign-in |
 
 ## What Gets Created
 
@@ -144,34 +173,241 @@ This action provisions the following AWS resources:
 
 ## Examples
 
-### Web Application
+### 1. Basic Authentication (No Branding)
+
+Standard Cognito setup with default UI styling:
+
+```yaml
+name: Deploy Basic Auth
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: us-east-1
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: github-actions
+      
+      - uses: alonch/actions-aws-backend-setup@main
+        with:
+          instance: my-app
+      
+      - uses: alonch/actions-aws-auth@main
+        with:
+          name: webapp-auth
+          callback_urls: "https://myapp.com/auth/callback"
+          logout_urls: "https://myapp.com"
+          # enable_managed_login_branding: false (this is the default)
+```
+
+### 2. Branded Authentication with Single Asset
+
+Custom branding with company logo:
+
+```yaml
+name: Deploy Branded Auth (Single Asset)
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: us-east-1
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: github-actions
+      
+      - uses: alonch/actions-aws-backend-setup@main
+        with:
+          instance: my-app
+      
+      # Encode logo file to base64 (you can do this in a separate step)
+      - name: Encode logo to base64
+        id: encode_logo
+        run: |
+          LOGO_BASE64=$(base64 -w 0 assets/company-logo.png)
+          echo "logo_data=$LOGO_BASE64" >> $GITHUB_OUTPUT
+        shell: bash
+      
+      - uses: alonch/actions-aws-auth@main
+        with:
+          name: branded-auth-single
+          callback_urls: "https://mycompany.com/auth/callback"
+          logout_urls: "https://mycompany.com"
+          enable_managed_login_branding: true
+          branding_settings_file: "config/branding-settings.json"
+          branding_assets: |
+            [
+              {
+                "category": "LOGO",
+                "extension": "png",
+                "bytes": "${{ steps.encode_logo.outputs.logo_data }}",
+                "color_mode": "LIGHT"
+              }
+            ]
+```
+
+### 3. Full Branded Authentication with Multiple Assets
+
+Complete branding setup with logo, favicon, and email graphics:
+
+```yaml
+name: Deploy Full Branded Auth
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: us-east-1
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: github-actions
+      
+      - uses: alonch/actions-aws-backend-setup@main
+        with:
+          instance: my-app
+      
+      # Encode multiple assets to base64
+      - name: Encode branding assets
+        id: encode_assets
+        run: |
+          # Light mode logo
+          LOGO_LIGHT=$(base64 -w 0 assets/logo-light.png)
+          echo "logo_light=$LOGO_LIGHT" >> $GITHUB_OUTPUT
+          
+          # Dark mode logo
+          LOGO_DARK=$(base64 -w 0 assets/logo-dark.png)
+          echo "logo_dark=$LOGO_DARK" >> $GITHUB_OUTPUT
+          
+          # Favicon
+          FAVICON=$(base64 -w 0 assets/favicon.ico)
+          echo "favicon=$FAVICON" >> $GITHUB_OUTPUT
+          
+          # Email header
+          EMAIL_HEADER=$(base64 -w 0 assets/email-header.png)
+          echo "email_header=$EMAIL_HEADER" >> $GITHUB_OUTPUT
+          
+          # Email footer
+          EMAIL_FOOTER=$(base64 -w 0 assets/email-footer.png)
+          echo "email_footer=$EMAIL_FOOTER" >> $GITHUB_OUTPUT
+        shell: bash
+      
+      - uses: alonch/actions-aws-auth@main
+        id: auth
+        with:
+          name: full-branded-auth
+          callback_urls: "https://mycompany.com/auth/callback,https://app.mycompany.com/callback"
+          logout_urls: "https://mycompany.com,https://app.mycompany.com"
+          enable_managed_login_branding: true
+          branding_settings_file: "config/company-branding.json"
+          branding_assets: |
+            [
+              {
+                "category": "LOGO",
+                "extension": "png",
+                "bytes": "${{ steps.encode_assets.outputs.logo_light }}",
+                "color_mode": "LIGHT"
+              },
+              {
+                "category": "LOGO",
+                "extension": "png",
+                "bytes": "${{ steps.encode_assets.outputs.logo_dark }}",
+                "color_mode": "DARK"
+              },
+              {
+                "category": "FAVICON",
+                "extension": "ico",
+                "bytes": "${{ steps.encode_assets.outputs.favicon }}",
+                "color_mode": "LIGHT"
+              },
+              {
+                "category": "EMAIL_GRAPHIC",
+                "extension": "png",
+                "bytes": "${{ steps.encode_assets.outputs.email_header }}",
+                "color_mode": "LIGHT"
+              },
+              {
+                "category": "EMAIL_GRAPHIC",
+                "extension": "png",
+                "bytes": "${{ steps.encode_assets.outputs.email_footer }}",
+                "color_mode": "LIGHT"
+              }
+            ]
+
+      # Use the outputs in subsequent steps
+      - name: Display auth information
+        run: |
+          echo "🎯 Authentication Setup Complete!"
+          echo "User Pool ID: ${{ steps.auth.outputs.user_pool_id }}"
+          echo "Hosted UI URL: ${{ steps.auth.outputs.hosted_ui_url }}"
+          echo "Branding Enabled: ${{ steps.auth.outputs.managed_login_branding_enabled }}"
+          echo "Managed Login Version: ${{ steps.auth.outputs.managed_login_version }}"
+        
+      # Example: Store outputs in GitHub environment variables
+      - name: Set deployment outputs
+        run: |
+          echo "COGNITO_USER_POOL_ID=${{ steps.auth.outputs.user_pool_id }}" >> $GITHUB_ENV
+          echo "COGNITO_CLIENT_ID=${{ steps.auth.outputs.client_id }}" >> $GITHUB_ENV
+          echo "COGNITO_DOMAIN=${{ steps.auth.outputs.cognito_domain }}" >> $GITHUB_ENV
+```
+
+### Alternative: Using Pre-encoded Assets
+
+If you prefer to store base64-encoded assets directly in your repository:
 
 ```yaml
 - uses: alonch/actions-aws-auth@main
   with:
-    name: webapp-auth
-    callback_urls: "https://myapp.com/auth/callback"
+    name: preencoded-branded-auth
+    callback_urls: "https://myapp.com/callback"
     logout_urls: "https://myapp.com"
-```
-
-### Mobile + Web Application
-
-```yaml
-- uses: alonch/actions-aws-auth@main
-  with:
-    name: multiplatform-auth
-    callback_urls: "https://myapp.com/callback,myapp://auth/callback"
-    logout_urls: "https://myapp.com,myapp://logout"
-```
-
-### Development Environment
-
-```yaml
-- uses: alonch/actions-aws-auth@main
-  with:
-    name: dev-auth
-    callback_urls: "http://localhost:3000/callback,http://localhost:8080/auth"
-    logout_urls: "http://localhost:3000,http://localhost:8080"
+    enable_managed_login_branding: true
+    branding_settings_file: "branding/settings.json"
+    branding_assets: |
+      [
+        {
+          "category": "LOGO",
+          "extension": "png",
+          "bytes": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+          "color_mode": "LIGHT"
+        },
+        {
+          "category": "FAVICON", 
+          "extension": "ico",
+          "bytes": "AAABAAEAEBAAAAAAAABoBQAAFgAAACgAAAAQAAAAIAAAAAEACAAAAAAAAAEAAAAAAAAAAAAAAAEAAAAAAAAAAAAA",
+          "color_mode": "LIGHT"
+        }
+      ]
 ```
 
 ## Troubleshooting
@@ -198,6 +434,7 @@ Enable debug output by setting the `ACTIONS_STEP_DEBUG` secret to `true` in your
 - **Custom Domains**: This action uses Cognito's provided domain. Custom domains require additional setup
 - **Advanced Branding**: Uses default Cognito UI styling (custom branding requires CloudFormation)
 - **Region**: Resources are created in the AWS region specified in your credentials
+- **Branding Assets**: Limited to 15 assets with 2MB maximum size per asset
 
 ## Contributing
 
@@ -206,3 +443,80 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Managed Login Branding
+
+### Overview
+
+AWS Cognito Managed Login provides advanced customization options for your authentication UI, allowing you to:
+
+- Custom logos and favicons
+- Brand colors and styling
+- Custom email templates
+- Company branding elements
+- Responsive design for all devices
+
+### Setting Up Branding
+
+1. **Create a branding settings JSON file**:
+
+```json
+{
+  "displayName": "My Company Portal",
+  "style": {
+    "primaryColor": "#007bff",
+    "backgroundColor": "#ffffff",
+    "buttonColor": "#007bff"
+  },
+  "branding": {
+    "headerText": "Welcome to My Company",
+    "footerText": "© 2024 My Company Inc."
+  }
+}
+```
+
+2. **Prepare your assets** (logos, icons, etc.) in your repository
+
+3. **Configure the action**:
+
+```yaml
+- uses: alonch/actions-aws-auth@main
+  with:
+    name: branded-auth
+    enable_managed_login_branding: true
+    branding_settings_file: "branding-settings.json"
+    branding_assets: |
+      [
+        {
+          "category": "LOGO",
+          "extension": "png", 
+          "bytes": "${{ base64_encode_file('assets/logo.png') }}",
+          "color_mode": "LIGHT"
+        },
+        {
+          "category": "FAVICON",
+          "extension": "ico",
+          "bytes": "${{ base64_encode_file('assets/favicon.ico') }}",
+          "color_mode": "LIGHT"
+        }
+      ]
+```
+
+### Branding Assets
+
+Supported asset categories:
+- `LOGO` - Your company logo
+- `FAVICON` - Browser favicon
+- `EMAIL_GRAPHIC` - Email template graphics
+- `SMS_GRAPHIC` - SMS template graphics
+- Various email and SMS templates
+
+**Requirements**:
+- Maximum 15 assets total
+- Maximum 2MB per asset
+- Supported formats: PNG, JPG, JPEG, ICO, SVG
+- Color modes: `LIGHT` or `DARK`
+
+### Example Branding Configuration
+
+See the `branding-assets-example.tf` file for complete examples of how to structure your branding configuration.

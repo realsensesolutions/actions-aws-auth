@@ -1,0 +1,41 @@
+{
+  "displayName": "My Company Portal",
+  "companyName": "My Company Inc.",
+  "emailSettings": {
+    "fromName": "My Company Support",
+    "replyToEmailAddress": "support@mycompany.com"
+  },
+  "style": {
+    "primaryColor": "#007bff",
+    "secondaryColor": "#6c757d",
+    "backgroundColor": "#ffffff",
+    "buttonColor": "#007bff",
+    "buttonTextColor": "#ffffff",
+    "linkColor": "#007bff",
+    "fontFamily": "Arial, sans-serif",
+    "fontSize": "14px",
+    "borderRadius": "4px"
+  },
+  "branding": {
+    "headerText": "Welcome to My Company Portal",
+    "footerText": "© 2024 My Company Inc. All rights reserved.",
+    "privacyPolicyUrl": "https://mycompany.com/privacy",
+    "termsOfServiceUrl": "https://mycompany.com/terms"
+  },
+  "loginPage": {
+    "welcomeMessage": "Sign in to your account",
+    "forgotPasswordText": "Forgot your password?",
+    "signUpText": "Don't have an account? Sign up"
+  },
+  "security": {
+    "enablePasswordReveal": false,
+    "enableRememberMe": true,
+    "sessionTimeoutMinutes": 60
+  },
+  "customization": {
+    "hideSignUpLink": false,
+    "hideForgotPasswordLink": false,
+    "enableSocialLogins": true,
+    "enableMFA": false
+  }
+} 
