@@ -8,8 +8,11 @@ A GitHub Action that provisions AWS Cognito User Pools for authentication using 
 - 🚀 **Simple Setup**: Minimal configuration required to get started
 - 🎨 **Cognito Hosted UI**: Automatically provisions Cognito's managed login interface
 - ✨ **Custom Branding**: Support for AWS Cognito Managed Login branding with custom logos, colors, and settings
+- 📁 **Flexible Branding Options**: Support for both inline JSON and file-based branding configurations
 - 🔄 **OAuth 2.0 Support**: Full OAuth 2.0/OpenID Connect support with customizable flows
 - 📱 **Multi-Platform**: Works with web, mobile, and API applications
+- 🌐 **Repository Portable**: Works seamlessly across different repositories with or without branding files
+- 🛡️ **Safe File Handling**: Gracefully handles missing files without errors
 - 🏗️ **Infrastructure as Code**: Uses Terraform for reliable, repeatable deployments
 
 ## Quick Start
@@ -70,6 +73,8 @@ jobs:
 
 ### Advanced Example with Managed Login Branding
 
+**Option 1: Using JSON string for branding assets**
+
 ```yaml
 - uses: alonch/actions-aws-auth@main
   with:
@@ -89,6 +94,19 @@ jobs:
       ]
 ```
 
+**Option 2: Using file for branding assets (recommended for multiple assets)**
+
+```yaml
+- uses: alonch/actions-aws-auth@main
+  with:
+    name: branded-auth-file
+    callback_urls: "https://app.example.com/auth/callback,https://admin.example.com/callback"
+    logout_urls: "https://app.example.com,https://admin.example.com"
+    enable_managed_login_branding: true
+    branding_settings_file: "config/branding-settings.json"
+    branding_assets_file: "config/branding-assets.json"
+```
+
 ## Inputs
 
 | Input | Description | Required | Default |
@@ -99,7 +117,10 @@ jobs:
 | `enable_managed_login_branding` | Enable managed login branding for custom UI | ❌ No | `false` |
 | `branding_settings_file` | Path to JSON file with branding settings | ❌ No | `""` |
 | `branding_assets` | JSON array of branding assets (max 15) | ❌ No | `[]` |
+| `branding_assets_file` | Path to JSON file containing branding assets | ❌ No | `""` |
 | `action` | Desired outcome: `apply`, `plan`, or `destroy` | ❌ No | `apply` |
+
+> **Note**: This action is designed to work across different repositories. All file paths are optional and the action will gracefully handle missing files without errors. If both `branding_assets` and `branding_assets_file` are provided, the file takes priority.
 
 ## Outputs
 
@@ -381,34 +402,115 @@ jobs:
           echo "COGNITO_DOMAIN=${{ steps.auth.outputs.cognito_domain }}" >> $GITHUB_ENV
 ```
 
-### Alternative: Using Pre-encoded Assets
+### 4. Simplified File-Based Branding (Recommended)
 
-If you prefer to store base64-encoded assets directly in your repository:
+The easiest way to manage branding with pre-created JSON files:
 
 ```yaml
-- uses: alonch/actions-aws-auth@main
-  with:
-    name: preencoded-branded-auth
-    callback_urls: "https://myapp.com/callback"
-    logout_urls: "https://myapp.com"
-    enable_managed_login_branding: true
-    branding_settings_file: "branding/settings.json"
-    branding_assets: |
-      [
-        {
-          "category": "LOGO",
-          "extension": "png",
-          "bytes": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
-          "color_mode": "LIGHT"
-        },
-        {
-          "category": "FAVICON", 
-          "extension": "ico",
-          "bytes": "AAABAAEAEBAAAAAAAABoBQAAFgAAACgAAAAQAAAAIAAAAAEACAAAAAAAAAEAAAAAAAAAAAAAAAEAAAAAAAAAAAAA",
-          "color_mode": "LIGHT"
-        }
-      ]
+name: Deploy File-Based Branded Auth
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: us-east-1
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: github-actions
+      
+      - uses: alonch/actions-aws-backend-setup@main
+        with:
+          instance: my-app
+      
+      - uses: alonch/actions-aws-auth@main
+        id: auth
+        with:
+          name: file-based-branded-auth
+          callback_urls: "https://mycompany.com/auth/callback"
+          logout_urls: "https://mycompany.com"
+          enable_managed_login_branding: true
+          branding_settings_file: "branding/settings.json"
+          branding_assets_file: "branding/assets.json"
+      
+      - name: Display results
+        run: |
+          echo "🎯 Branded Authentication Deployed!"
+          echo "Hosted UI: ${{ steps.auth.outputs.hosted_ui_url }}"
 ```
+
+**Example `branding/assets.json`:**
+```json
+[
+  {
+    "category": "LOGO",
+    "extension": "png",
+    "bytes": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+    "color_mode": "LIGHT"
+  },
+  {
+    "category": "FAVICON",
+    "extension": "ico", 
+    "bytes": "AAABAAEAEBAAAAAAAABoBQAAFgAAACgAAAAQAAAAIAAAAAEACAAAAAAAAAEAAAAAAAAAAAAAAAEAAAAAAAAAAAAA",
+    "color_mode": "LIGHT"
+  }
+]
+```
+
+**Example `branding/settings.json`:**
+```json
+{
+  "displayName": "My Company Portal",
+  "style": {
+    "primaryColor": "#007bff",
+    "backgroundColor": "#ffffff",
+    "buttonColor": "#007bff"
+  },
+  "branding": {
+    "headerText": "Welcome to My Company",
+    "footerText": "© 2024 My Company Inc."
+  }
+}
+```
+
+> **✅ Repository Portability**: This action works seamlessly across different repositories. If the branding files don't exist in a repository, the action will simply use default Cognito styling without errors.
+
+## Branding Configuration Options
+
+This action provides flexible ways to configure branding for your Cognito authentication:
+
+### 1. No Branding (Default)
+- Set `enable_managed_login_branding: false` or omit it entirely
+- Uses standard Cognito UI with AWS default styling
+- Works in any repository without additional files
+
+### 2. Settings Only
+- Use `branding_settings_file` to customize colors, text, and styling
+- No custom assets (logos, icons) required
+- Lightweight branding approach
+
+### 3. Full Branding with Inline Assets
+- Use `branding_assets` parameter with base64-encoded asset data
+- Suitable for simple setups with few assets
+- All configuration in the workflow file
+
+### 4. Full Branding with File Assets (Recommended)
+- Use `branding_assets_file` parameter pointing to a JSON file
+- Better for complex branding with multiple assets
+- Easier to maintain and version control
+- **File safety**: Action gracefully handles missing files
+
+### File Priority
+When both `branding_assets` and `branding_assets_file` are provided, the file takes priority for better maintainability.
 
 ## Troubleshooting
 
@@ -417,6 +519,26 @@ If you prefer to store base64-encoded assets directly in your repository:
 1. **Invalid Callback URL**: Ensure your callback URLs are properly formatted and accessible
 2. **CORS Issues**: Configure CORS in your application to allow requests from the Cognito domain
 3. **Token Validation**: Use AWS SDKs or JWT libraries to validate tokens from Cognito
+4. **Missing Branding Files**: The action gracefully handles missing branding files - if a file doesn't exist, default values are used instead of failing
+5. **Invalid JSON in Branding Files**: Ensure your branding JSON files are properly formatted. Use online JSON validators if needed
+6. **Branding Assets Size Limits**: Each asset must be under 2MB, and maximum 15 assets total are allowed
+
+### File-Related Issues
+
+**Q: My branding files exist but the action says they don't**
+- Ensure file paths are relative to your repository root
+- Check file names and extensions match exactly
+- Verify files are committed to your repository
+
+**Q: Can I use this action in repos without branding files?**
+- Yes! The action is designed to work across different repositories
+- Missing branding files are handled gracefully
+- The action will use default Cognito styling if files are missing
+
+**Q: Which branding approach should I use?**
+- For simple setups: Use `branding_assets` parameter
+- For complex/multiple assets: Use `branding_assets_file` parameter
+- For maximum portability: Use file-based approach with files committed to repo
 
 ### Debugging
 

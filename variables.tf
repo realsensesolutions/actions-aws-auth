@@ -47,3 +47,9 @@ variable "branding_assets" {
     error_message = "Maximum of 15 branding assets allowed"
   }
 }
+
+variable "branding_assets_file" {
+  description = "Path to JSON file containing branding assets for managed login (alternative to branding_assets)"
+  type        = string
+  default     = ""
+}

@@ -33,6 +33,10 @@ inputs:
     description: 'JSON array of branding assets for managed login (max 15 assets)'
     required: false
     default: '[]'
+  branding_assets_file:
+    description: 'Path to JSON file containing branding assets for managed login'
+    required: false
+    default: ''
 
 outputs:
   user_pool_id:
@@ -83,6 +87,7 @@ runs:
         TF_VAR_enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}
         TF_VAR_branding_settings_file: ${{ inputs.branding_settings_file }}
         TF_VAR_branding_assets: ${{ inputs.branding_assets }}
+        TF_VAR_branding_assets_file: ${{ inputs.branding_assets_file }}
 
     - name: Terraform plan
       if: inputs.action == 'plan'
@@ -96,6 +101,7 @@ runs:
         TF_VAR_enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}
         TF_VAR_branding_settings_file: ${{ inputs.branding_settings_file }}
         TF_VAR_branding_assets: ${{ inputs.branding_assets }}
+        TF_VAR_branding_assets_file: ${{ inputs.branding_assets_file }}
 
     - name: Terraform init and destroy
       if: inputs.action == 'destroy'
@@ -118,6 +124,7 @@ runs:
         TF_VAR_enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}
         TF_VAR_branding_settings_file: ${{ inputs.branding_settings_file }}
         TF_VAR_branding_assets: ${{ inputs.branding_assets }}
+        TF_VAR_branding_assets_file: ${{ inputs.branding_assets_file }}
 
     - name: Terraform apply
       id: terraform
@@ -153,6 +160,7 @@ runs:
         TF_VAR_enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}
         TF_VAR_branding_settings_file: ${{ inputs.branding_settings_file }}
         TF_VAR_branding_assets: ${{ inputs.branding_assets }}
+        TF_VAR_branding_assets_file: ${{ inputs.branding_assets_file }}
 
     - name: Set final outputs
       id: outputs

@@ -13,11 +13,14 @@ locals {
   callback_urls = split(",", var.callback_urls)
   logout_urls   = split(",", var.logout_urls)
   
-  # Read branding settings from JSON file if provided
-  branding_settings = var.enable_managed_login_branding && var.branding_settings_file != "" ? jsondecode(file(var.branding_settings_file)) : {}
+  # Safely read branding settings from JSON file if provided and file exists
+  # Use try() to handle cases where file doesn't exist without causing errors
+  branding_settings = var.enable_managed_login_branding && var.branding_settings_file != "" ? try(jsondecode(file(var.branding_settings_file)), {}) : {}
   
-  # Parse branding assets from JSON string
-  branding_assets = var.enable_managed_login_branding ? jsondecode(var.branding_assets) : []
+  # Parse branding assets from JSON string or file (file takes priority if both provided)
+  branding_assets = var.enable_managed_login_branding ? (
+    var.branding_assets_file != "" ? try(jsondecode(file(var.branding_assets_file)), []) : jsondecode(var.branding_assets)
+  ) : []
 }
 
 # Create Cognito User Pool
