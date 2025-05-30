@@ -85,9 +85,9 @@ runs:
         TF_VAR_callback_urls: ${{ inputs.callback_urls }}
         TF_VAR_logout_urls: ${{ inputs.logout_urls }}
         TF_VAR_enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}
-        TF_VAR_branding_settings_file: ${{ inputs.branding_settings_file }}
+        TF_VAR_branding_settings_file: "${{ github.workspace }}/${{ inputs.branding_settings_file }}"
         TF_VAR_branding_assets: ${{ inputs.branding_assets }}
-        TF_VAR_branding_assets_file: ${{ inputs.branding_assets_file }}
+        TF_VAR_branding_assets_file: "${{ github.workspace }}/${{ inputs.branding_assets_file }}"
 
     - name: Terraform plan
       if: inputs.action == 'plan'
