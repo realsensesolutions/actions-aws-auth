@@ -13,9 +13,9 @@ locals {
   callback_urls = split(",", var.callback_urls)
   logout_urls   = split(",", var.logout_urls)
   
-  # Safely read branding settings from JSON file if provided and file exists
-  # Use try() to handle cases where file doesn't exist without causing errors
-  branding_settings = var.enable_managed_login_branding && var.branding_settings_file != "" ? try(jsondecode(file(var.branding_settings_file)), {}) : {}
+  # Read branding settings from JSON file as string if provided and file exists
+  # The AWS CloudFormation resource expects a JSON string, not a parsed object
+  branding_settings = var.enable_managed_login_branding && var.branding_settings_file != "" ? try(file(var.branding_settings_file), null) : null
   
   # Parse branding assets from JSON string or file (file takes priority if both provided)
   branding_assets = var.enable_managed_login_branding ? (
@@ -107,8 +107,8 @@ resource "awscc_cognito_managed_login_branding" "this" {
 
   user_pool_id = aws_cognito_user_pool.this.id
   
-  # Apply branding settings from JSON file
-  settings = local.branding_settings
+  # Apply branding settings from JSON file as string (only if settings file is provided)
+  settings = local.branding_settings != null ? local.branding_settings : "{}"
   
   # Add branding assets as direct argument, not dynamic block
   assets = local.branding_assets
