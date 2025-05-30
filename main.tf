@@ -107,16 +107,8 @@ resource "awscc_cognito_managed_login_branding" "this" {
   # Apply branding settings from JSON file
   settings = local.branding_settings
   
-  # Add branding assets
-  dynamic "assets" {
-    for_each = local.branding_assets
-    content {
-      category   = assets.value.category
-      extension  = assets.value.extension
-      bytes      = assets.value.bytes
-      color_mode = assets.value.color_mode
-    }
-  }
+  # Add branding assets as direct argument, not dynamic block
+  assets = local.branding_assets
 
   # Ensure domain is created first to enable managed login
   depends_on = [aws_cognito_user_pool_domain.this]
