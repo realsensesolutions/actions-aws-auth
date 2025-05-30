@@ -119,11 +119,10 @@ resource "awscc_cognito_managed_login_branding" "this" {
 
   lifecycle {
     replace_triggered_by = [
-      # If the user pool ID or client ID changes, this resource must be replaced,
-      # as UserPoolId and ClientId are create-only properties.
-      aws_cognito_user_pool.this.id,
+      # Force replacement if the client_id changes
       aws_cognito_user_pool_client.this.id,
     ]
+    create_before_destroy = true
   }
 }
 
