@@ -106,7 +106,7 @@ resource "awscc_cognito_managed_login_branding" "this" {
   count = var.enable_managed_login_branding ? 1 : 0
 
   user_pool_id = aws_cognito_user_pool.this.id
-  client_id    = aws_cognito_user_pool_client.this.id
+  # client_id    = aws_cognito_user_pool_client.this.id
   
   # Apply branding settings from JSON file as string (only if settings file is provided)
   settings = local.branding_settings != null ? local.branding_settings : "{}"
@@ -116,14 +116,6 @@ resource "awscc_cognito_managed_login_branding" "this" {
 
   # Ensure domain is created first to enable managed login
   depends_on = [aws_cognito_user_pool_domain.this]
-
-  lifecycle {
-    replace_triggered_by = [
-      # Force replacement if the client_id changes
-      aws_cognito_user_pool_client.this.id,
-    ]
-    create_before_destroy = true
-  }
 }
 
 # Note: Managed Login Branding is only available in CloudFormation, not Terraform
