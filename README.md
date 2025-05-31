@@ -116,11 +116,14 @@ jobs:
 | `logout_urls` | Comma-separated list of logout URLs for OAuth | ❌ No | `https://example.com` |
 | `enable_managed_login_branding` | Enable managed login branding for custom UI | ❌ No | `false` |
 | `branding_settings_file` | Path to JSON file with branding settings | ❌ No | `""` |
-| `branding_assets` | JSON array of branding assets (max 15) | ❌ No | `[]` |
-| `branding_assets_file` | Path to JSON file containing branding assets | ❌ No | `""` |
 | `action` | Desired outcome: `apply`, `plan`, or `destroy` | ❌ No | `apply` |
 
-> **Note**: This action is designed to work across different repositories. All file paths are optional and the action will gracefully handle missing files without errors. If both `branding_assets` and `branding_assets_file` are provided, the file takes priority.
+> **Note**: When `enable_managed_login_branding` is true, the action will automatically process images from your repository at these paths:
+> - `assets/background/image.png` → PAGE_BACKGROUND
+> - `assets/favicon/image.ico` → FAVICON_ICO
+> - `assets/logo/image.png` → FORM_LOGO
+> 
+> All file paths are optional and the action will gracefully handle missing files without errors.
 
 ## Outputs
 
@@ -232,12 +235,12 @@ jobs:
           # enable_managed_login_branding: false (this is the default)
 ```
 
-### 2. Branded Authentication with Single Asset
+### 2. Automatic Branding with Standard Paths (Recommended)
 
-Custom branding with company logo:
+The simplest way to add branding - just place your images in the expected paths:
 
 ```yaml
-name: Deploy Branded Auth (Single Asset)
+name: Deploy Auto-Branded Auth
 on:
   push:
     branches: [main]
@@ -262,145 +265,35 @@ jobs:
         with:
           instance: my-app
       
-      # Encode logo file to base64 (you can do this in a separate step)
-      - name: Encode logo to base64
-        id: encode_logo
-        run: |
-          LOGO_BASE64=$(base64 -w 0 assets/company-logo.png)
-          echo "logo_data=$LOGO_BASE64" >> $GITHUB_OUTPUT
-        shell: bash
-      
       - uses: alonch/actions-aws-auth@main
         with:
-          name: branded-auth-single
+          name: auto-branded-auth
           callback_urls: "https://mycompany.com/auth/callback"
           logout_urls: "https://mycompany.com"
           enable_managed_login_branding: true
           branding_settings_file: "config/branding-settings.json"
-          branding_assets: |
-            [
-              {
-                "category": "LOGO",
-                "extension": "png",
-                "bytes": "${{ steps.encode_logo.outputs.logo_data }}",
-                "color_mode": "LIGHT"
-              }
-            ]
 ```
 
-### 3. Full Branded Authentication with Multiple Assets
-
-Complete branding setup with logo, favicon, and email graphics:
-
-```yaml
-name: Deploy Full Branded Auth
-on:
-  push:
-    branches: [main]
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
-    
-    steps:
-      - uses: actions/checkout@v4
-      
-      - uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: us-east-1
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          role-session-name: github-actions
-      
-      - uses: alonch/actions-aws-backend-setup@main
-        with:
-          instance: my-app
-      
-      # Encode multiple assets to base64
-      - name: Encode branding assets
-        id: encode_assets
-        run: |
-          # Light mode logo
-          LOGO_LIGHT=$(base64 -w 0 assets/logo-light.png)
-          echo "logo_light=$LOGO_LIGHT" >> $GITHUB_OUTPUT
-          
-          # Dark mode logo
-          LOGO_DARK=$(base64 -w 0 assets/logo-dark.png)
-          echo "logo_dark=$LOGO_DARK" >> $GITHUB_OUTPUT
-          
-          # Favicon
-          FAVICON=$(base64 -w 0 assets/favicon.ico)
-          echo "favicon=$FAVICON" >> $GITHUB_OUTPUT
-          
-          # Email header
-          EMAIL_HEADER=$(base64 -w 0 assets/email-header.png)
-          echo "email_header=$EMAIL_HEADER" >> $GITHUB_OUTPUT
-          
-          # Email footer
-          EMAIL_FOOTER=$(base64 -w 0 assets/email-footer.png)
-          echo "email_footer=$EMAIL_FOOTER" >> $GITHUB_OUTPUT
-        shell: bash
-      
-      - uses: alonch/actions-aws-auth@main
-        id: auth
-        with:
-          name: full-branded-auth
-          callback_urls: "https://mycompany.com/auth/callback,https://app.mycompany.com/callback"
-          logout_urls: "https://mycompany.com,https://app.mycompany.com"
-          enable_managed_login_branding: true
-          branding_settings_file: "config/company-branding.json"
-          branding_assets: |
-            [
-              {
-                "category": "LOGO",
-                "extension": "png",
-                "bytes": "${{ steps.encode_assets.outputs.logo_light }}",
-                "color_mode": "LIGHT"
-              },
-              {
-                "category": "LOGO",
-                "extension": "png",
-                "bytes": "${{ steps.encode_assets.outputs.logo_dark }}",
-                "color_mode": "DARK"
-              },
-              {
-                "category": "FAVICON",
-                "extension": "ico",
-                "bytes": "${{ steps.encode_assets.outputs.favicon }}",
-                "color_mode": "LIGHT"
-              },
-              {
-                "category": "EMAIL_GRAPHIC",
-                "extension": "png",
-                "bytes": "${{ steps.encode_assets.outputs.email_header }}",
-                "color_mode": "LIGHT"
-              },
-              {
-                "category": "EMAIL_GRAPHIC",
-                "extension": "png",
-                "bytes": "${{ steps.encode_assets.outputs.email_footer }}",
-                "color_mode": "LIGHT"
-              }
-            ]
-
-      # Use the outputs in subsequent steps
-      - name: Display auth information
-        run: |
-          echo "🎯 Authentication Setup Complete!"
-          echo "User Pool ID: ${{ steps.auth.outputs.user_pool_id }}"
-          echo "Hosted UI URL: ${{ steps.auth.outputs.hosted_ui_url }}"
-          echo "Branding Enabled: ${{ steps.auth.outputs.managed_login_branding_enabled }}"
-          echo "Managed Login Version: ${{ steps.auth.outputs.managed_login_version }}"
-        
-      # Example: Store outputs in GitHub environment variables
-      - name: Set deployment outputs
-        run: |
-          echo "COGNITO_USER_POOL_ID=${{ steps.auth.outputs.user_pool_id }}" >> $GITHUB_ENV
-          echo "COGNITO_CLIENT_ID=${{ steps.auth.outputs.client_id }}" >> $GITHUB_ENV
-          echo "COGNITO_DOMAIN=${{ steps.auth.outputs.cognito_domain }}" >> $GITHUB_ENV
+**Required directory structure:**
 ```
+your-repo/
+├── assets/
+│   ├── background/
+│   │   └── image.png      # Page background
+│   ├── favicon/
+│   │   └── image.ico      # Favicon
+│   └── logo/
+│       └── image.png      # Form logo
+└── config/
+    └── branding-settings.json
+```
+
+The action will automatically:
+- Convert your images to base64
+- Create the branding assets JSON
+- Apply the branding to your Cognito setup
+
+### 3. Advanced Manual Branding (Legacy)
 
 ### 4. Simplified File-Based Branding (Recommended)
 

@@ -17,10 +17,8 @@ locals {
   # The AWS CloudFormation resource expects a JSON string, not a parsed object
   branding_settings = var.enable_managed_login_branding && var.branding_settings_file != "" ? try(file(var.branding_settings_file), null) : null
   
-  # Parse branding assets from JSON string or file (file takes priority if both provided)
-  branding_assets = var.enable_managed_login_branding ? (
-    var.branding_assets_file != "" ? try(jsondecode(file(var.branding_assets_file)), []) : jsondecode(var.branding_assets)
-  ) : []
+  # Parse branding assets from automatically generated file
+  branding_assets = var.enable_managed_login_branding && var.branding_assets_file != "" ? try(jsondecode(file(var.branding_assets_file)), []) : []
 }
 
 # Create Cognito User Pool

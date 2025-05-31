@@ -29,14 +29,6 @@ inputs:
     description: 'Path to JSON file containing branding settings for managed login'
     required: false
     default: ''
-  branding_assets:
-    description: 'JSON array of branding assets for managed login (max 15 assets)'
-    required: false
-    default: '[]'
-  branding_assets_file:
-    description: 'Path to JSON file containing branding assets for managed login'
-    required: false
-    default: ''
 
 outputs:
   user_pool_id:
@@ -70,6 +62,13 @@ outputs:
 runs:
   using: "composite"
   steps:
+    - name: Process branding assets
+      if: inputs.enable_managed_login_branding == 'true'
+      run: |
+        chmod +x "${{ github.action_path }}/scripts/process_branding_assets.sh"
+        "${{ github.action_path }}/scripts/process_branding_assets.sh" "${{ inputs.enable_managed_login_branding }}" "${{ github.workspace }}"
+      shell: bash
+
     - name: Terraform init for apply/plan
       if: inputs.action != 'destroy'
       run: |
@@ -86,8 +85,7 @@ runs:
         TF_VAR_logout_urls: ${{ inputs.logout_urls }}
         TF_VAR_enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}
         TF_VAR_branding_settings_file: "${{ github.workspace }}/${{ inputs.branding_settings_file }}"
-        TF_VAR_branding_assets: ${{ inputs.branding_assets }}
-        TF_VAR_branding_assets_file: "${{ github.workspace }}/${{ inputs.branding_assets_file }}"
+        TF_VAR_branding_assets_file: "${{ github.workspace }}/.branding_assets.json"
 
     - name: Terraform plan
       if: inputs.action == 'plan'
@@ -100,8 +98,7 @@ runs:
         TF_VAR_logout_urls: ${{ inputs.logout_urls }}
         TF_VAR_enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}
         TF_VAR_branding_settings_file: "${{ github.workspace }}/${{ inputs.branding_settings_file }}"
-        TF_VAR_branding_assets: ${{ inputs.branding_assets }}
-        TF_VAR_branding_assets_file: "${{ github.workspace }}/${{ inputs.branding_assets_file }}"
+        TF_VAR_branding_assets_file: "${{ github.workspace }}/.branding_assets.json"
 
     - name: Terraform init and destroy
       if: inputs.action == 'destroy'
@@ -123,8 +120,7 @@ runs:
         TF_VAR_logout_urls: ${{ inputs.logout_urls }}
         TF_VAR_enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}
         TF_VAR_branding_settings_file: "${{ github.workspace }}/${{ inputs.branding_settings_file }}"
-        TF_VAR_branding_assets: ${{ inputs.branding_assets }}
-        TF_VAR_branding_assets_file: "${{ github.workspace }}/${{ inputs.branding_assets_file }}"
+        TF_VAR_branding_assets_file: "${{ github.workspace }}/.branding_assets.json"
 
     - name: Terraform apply
       id: terraform
@@ -159,8 +155,7 @@ runs:
         TF_VAR_logout_urls: ${{ inputs.logout_urls }}
         TF_VAR_enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}
         TF_VAR_branding_settings_file: "${{ github.workspace }}/${{ inputs.branding_settings_file }}"
-        TF_VAR_branding_assets: ${{ inputs.branding_assets }}
-        TF_VAR_branding_assets_file: "${{ github.workspace }}/${{ inputs.branding_assets_file }}"
+        TF_VAR_branding_assets_file: "${{ github.workspace }}/.branding_assets.json"
 
     - name: Set final outputs
       id: outputs

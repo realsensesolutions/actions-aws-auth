@@ -32,24 +32,8 @@ variable "branding_settings_file" {
   default     = ""
 }
 
-variable "branding_assets" {
-  description = "JSON string containing list of branding assets for managed login (max 15 assets)"
-  type        = string
-  default     = "[]"
-
-  validation {
-    condition = can(jsondecode(var.branding_assets))
-    error_message = "branding_assets must be valid JSON"
-  }
-
-  validation {
-    condition = length(jsondecode(var.branding_assets)) <= 15
-    error_message = "Maximum of 15 branding assets allowed"
-  }
-}
-
 variable "branding_assets_file" {
-  description = "Path to JSON file containing branding assets for managed login (alternative to branding_assets)"
+  description = "Path to JSON file containing branding assets for managed login (automatically generated from assets/)"
   type        = string
   default     = ""
 }
