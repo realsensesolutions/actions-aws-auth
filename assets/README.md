@@ -4,51 +4,67 @@ This directory contains the branding assets for your Cognito Managed Login confi
 
 ## Automatic Asset Processing
 
-When `enable_managed_login_branding` is set to `true`, the action will automatically process images from these specific paths:
+When `enable_managed_login_branding` is set to `true`, the action will automatically process any image files found in these directories:
 
 ```
 assets/
 ├── background/
-│   └── image.png      # → PAGE_BACKGROUND (PNG format)
+│   └── [any image file]    # → PAGE_BACKGROUND (PNG, JPG, JPEG, SVG formats)
 ├── favicon/
-│   └── image.ico      # → FAVICON_ICO (ICO format)
+│   └── [any image file]    # → FAVICON_ICO (ICO, PNG formats)
 └── logo/
-    └── image.png      # → FORM_LOGO (PNG format)
+    └── [any image file]    # → FORM_LOGO (PNG, JPG, JPEG, SVG formats)
 ```
 
-Simply place your images in these exact paths and the action will:
-- Automatically convert them to base64
-- Create the required JSON structure
+Simply place your images in these directories with any filename and the action will:
+- Automatically detect and convert them to base64
+- Determine the correct file extension and format
+- Create the required JSON structure  
 - Apply them to your Cognito branding
 
 ## File Requirements
 
-- **Background Image**: `assets/background/image.png`
-  - Recommended size: 1920x1080px or larger
-  - Format: PNG
+The script automatically scans for image files with these extensions:
+- **PNG** files (`.png`)
+- **JPEG/JPG** files (`.jpg`, `.jpeg`) 
+- **ICO** files (`.ico`)
+- **SVG** files (`.svg`)
+
+### Directory Structure
+- **Background Images**: `assets/background/`
+  - Any PNG, JPG, JPEG, or SVG file
   - Category: PAGE_BACKGROUND
 
-- **Favicon**: `assets/favicon/image.ico`
-  - Recommended size: 32x32px
-  - Format: ICO
+- **Favicon**: `assets/favicon/`
+  - Any ICO or PNG file
   - Category: FAVICON_ICO
 
-- **Logo**: `assets/logo/image.png`
-  - Recommended size: 200x50px
-  - Format: PNG
+- **Logo**: `assets/logo/`
+  - Any PNG, JPG, JPEG, or SVG file
   - Category: FORM_LOGO
 
 ## File Constraints
 
 - **Maximum file size**: 2MB per asset
 - **Color mode**: All assets use "LIGHT" mode by default
-- **Missing files**: The action gracefully handles missing files - only available assets will be processed
+- **Missing directories**: The action gracefully handles missing directories - only available assets will be processed
+- **Multiple files**: If multiple images are found in a directory, all will be processed
 
 ## Example Usage
 
 ### Simple Setup
 
-Just add your images to the correct paths:
+Just add your images to the correct directories with any names:
+
+```
+assets/
+├── background/
+│   └── company-background.png
+├── favicon/
+│   └── my-favicon.ico
+└── logo/
+    └── company-logo.png
+```
 
 ```yaml
 - uses: alonch/actions-aws-auth@main
@@ -88,25 +104,27 @@ The action automatically creates this JSON structure from your images:
 ## Repository Portability
 
 This structure works across different repositories:
-- Missing assets are handled gracefully
+- Missing assets or directories are handled gracefully
 - No errors if directories don't exist
 - Repositories without branding assets will use default Cognito styling
+- Flexible file naming - use any names you prefer
 
 ## Migration from Manual Setup
 
 If you're migrating from manual asset management:
 
-1. Move your images to the new standard paths
+1. Move your images to the new directory structure (any filenames are fine)
 2. Remove manual `branding_assets` or `branding_assets_file` parameters
 3. Set `enable_managed_login_branding: true`
 4. The action will handle the rest automatically
 
 ## Troubleshooting
 
-- **File not found**: Ensure exact paths and filenames match the requirements
-- **Invalid format**: Check that background and logo are PNG, favicon is ICO
+- **Directory not found**: Create the directory structure if it doesn't exist
+- **Invalid format**: Ensure files are in supported formats (PNG, JPG, JPEG, ICO, SVG)
 - **File too large**: Ensure each file is under 2MB
 - **Repository structure**: Verify the `assets/` directory is in your repository root
+- **Multiple files**: If you have multiple files in one directory, all will be processed
 
 ## Supported Asset Types
 

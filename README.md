@@ -118,12 +118,12 @@ jobs:
 | `branding_settings_file` | Path to JSON file with branding settings | ❌ No | `""` |
 | `action` | Desired outcome: `apply`, `plan`, or `destroy` | ❌ No | `apply` |
 
-> **Note**: When `enable_managed_login_branding` is true, the action will automatically process images from your repository at these paths:
-> - `assets/background/image.png` → PAGE_BACKGROUND
-> - `assets/favicon/image.ico` → FAVICON_ICO
-> - `assets/logo/image.png` → FORM_LOGO
+> **Note**: When `enable_managed_login_branding` is true, the action will automatically process image files from your repository in these directories:
+> - `assets/background/` → PAGE_BACKGROUND (PNG, JPG, JPEG, SVG files)
+> - `assets/favicon/` → FAVICON_ICO (ICO, PNG files)  
+> - `assets/logo/` → FORM_LOGO (PNG, JPG, JPEG, SVG files)
 > 
-> All file paths are optional and the action will gracefully handle missing files without errors.
+> Any filename is supported in each directory. The action will gracefully handle missing directories without errors.
 
 ## Outputs
 
@@ -279,19 +279,47 @@ jobs:
 your-repo/
 ├── assets/
 │   ├── background/
-│   │   └── image.png      # Page background
+│   │   └── [any image file]      # → PAGE_BACKGROUND (PNG, JPG, JPEG, SVG formats)
 │   ├── favicon/
-│   │   └── image.ico      # Favicon
+│   │   └── [any image file]      # → FAVICON_ICO (ICO, PNG formats)
 │   └── logo/
-│       └── image.png      # Form logo
+│       └── [any image file]      # → FORM_LOGO (PNG, JPG, JPEG, SVG formats)
 └── config/
     └── branding-settings.json
 ```
 
 The action will automatically:
-- Convert your images to base64
+- Scan directories for any image files (flexible naming)
+- Detect and convert your images to base64
+- Determine the correct file extension and format
 - Create the branding assets JSON
 - Apply the branding to your Cognito setup
+
+**Supported file formats:**
+- PNG, JPG, JPEG, SVG files for backgrounds and logos
+- ICO, PNG files for favicons
+- Any filename is supported - no need for specific names
+
+**Examples of valid structures:**
+```
+your-repo/assets/
+├── background/
+│   └── company-bg.png
+├── favicon/  
+│   └── site-icon.ico
+└── logo/
+    └── brand-logo.svg
+```
+
+```
+your-repo/assets/
+├── background/
+│   └── hero-image.jpg
+├── favicon/
+│   └── favicon.png
+└── logo/
+    └── my-company.png
+```
 
 ### 3. Advanced Manual Branding (Legacy)
 

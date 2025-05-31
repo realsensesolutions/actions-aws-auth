@@ -55,16 +55,59 @@ EOF
     fi
 }
 
+# Function to process images in a directory
+process_directory() {
+    local dir_path="$1"
+    local category="$2"
+    local color_mode="$3"
+    
+    if [ ! -d "$dir_path" ]; then
+        echo "Directory $dir_path not found, skipping $category assets"
+        return
+    fi
+    
+    echo "Scanning directory: $dir_path"
+    
+    # Find all image files in the directory and process them
+    while IFS= read -r -d '' file_path; do
+        if [ -f "$file_path" ]; then
+            # Get file extension and convert to uppercase
+            extension=$(basename "$file_path" | sed 's/.*\.//' | tr '[:lower:]' '[:upper:]')
+            
+            # Handle JPEG files - AWS expects "JPG" not "JPEG"
+            if [ "$extension" = "JPEG" ]; then
+                extension="JPG"
+            fi
+            
+            echo "Found image: $(basename "$file_path") with extension: $extension"
+            add_asset "$category" "$extension" "$file_path" "$color_mode"
+        fi
+    done < <(find "$dir_path" -maxdepth 1 -type f \( \
+        -iname "*.png" -o \
+        -iname "*.jpg" -o \
+        -iname "*.jpeg" -o \
+        -iname "*.ico" -o \
+        -iname "*.svg" \
+    \) -print0)
+}
+
 # Ensure jq is available
 if ! command -v jq >/dev/null 2>&1; then
     echo "Error: jq is required but not installed"
     exit 1
 fi
 
-# Process specific assets according to user requirements
-add_asset "PAGE_BACKGROUND" "PNG" "$WORKSPACE_PATH/assets/background/image.png" "LIGHT"
-add_asset "FAVICON_ICO" "ICO" "$WORKSPACE_PATH/assets/favicon/image.ico" "LIGHT"
-add_asset "FORM_LOGO" "PNG" "$WORKSPACE_PATH/assets/logo/image.png" "LIGHT"
+# Process assets from different directories
+echo "Searching for branding assets in standard directories..."
+
+# Process background images
+process_directory "$WORKSPACE_PATH/assets/background" "PAGE_BACKGROUND" "LIGHT"
+
+# Process favicon images  
+process_directory "$WORKSPACE_PATH/assets/favicon" "FAVICON_ICO" "LIGHT"
+
+# Process logo images
+process_directory "$WORKSPACE_PATH/assets/logo" "FORM_LOGO" "LIGHT"
 
 # Write the final JSON array to file
 echo "$ASSETS" | jq '.' > "$OUTPUT_FILE"
