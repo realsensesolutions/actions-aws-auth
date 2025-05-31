@@ -26,6 +26,13 @@ add_asset() {
     if [ -f "$file_path" ]; then
         echo "Processing $file_path for category $category"
         
+        # Check file size (2MB limit)
+        local file_size=$(stat -f%z "$file_path" 2>/dev/null || stat -c%s "$file_path" 2>/dev/null)
+        if [ "$file_size" -gt 2097152 ]; then
+            echo "Warning: $file_path is larger than 2MB ($file_size bytes), skipping"
+            return
+        fi
+        
         # Convert image to base64
         local base64_content
         if command -v base64 >/dev/null 2>&1; then
@@ -36,19 +43,36 @@ add_asset() {
             exit 1
         fi
         
-        # Create JSON object for this asset
-        local asset_json=$(cat << EOF
-{
-  "category": "$category",
-  "extension": "$extension",
-  "bytes": "$base64_content",
-  "color_mode": "$color_mode"
-}
-EOF
-)
+        # Create temporary file for the new asset JSON
+        local temp_asset_file=$(mktemp)
         
-        # Add to assets array
-        ASSETS=$(echo "$ASSETS" | jq ". += [$asset_json]")
+        # Write the asset JSON to temporary file using jq to ensure proper escaping
+        jq -n \
+            --arg category "$category" \
+            --arg extension "$extension" \
+            --arg bytes "$base64_content" \
+            --arg color_mode "$color_mode" \
+            '{
+                category: $category,
+                extension: $extension,
+                bytes: $bytes,
+                color_mode: $color_mode
+            }' > "$temp_asset_file"
+        
+        # Create temporary file for current assets
+        local temp_current_file=$(mktemp)
+        echo "$ASSETS" > "$temp_current_file"
+        
+        # Merge the new asset with existing assets using jq
+        local temp_result_file=$(mktemp)
+        jq --slurpfile new_asset "$temp_asset_file" '. += $new_asset' "$temp_current_file" > "$temp_result_file"
+        
+        # Read the result back
+        ASSETS=$(cat "$temp_result_file")
+        
+        # Clean up temporary files
+        rm -f "$temp_asset_file" "$temp_current_file" "$temp_result_file"
+        
         echo "Added $category asset"
     else
         echo "Warning: $file_path not found, skipping $category asset"
