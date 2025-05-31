@@ -2,9 +2,9 @@
 
 This directory contains the branding assets for your Cognito Managed Login configuration.
 
-## Automatic Asset Processing
+## Automatic Asset Processing with Terraform
 
-When `enable_managed_login_branding` is set to `true`, the action will automatically process any image files found in these directories:
+When `enable_managed_login_branding` is set to `true`, the action automatically uses Terraform's `filebase64()` function to process any image files found in these directories:
 
 ```
 assets/
@@ -16,15 +16,16 @@ assets/
     └── [any image file]    # → FORM_LOGO (PNG, JPG, JPEG, SVG formats)
 ```
 
-Simply place your images in these directories with any filename and the action will:
-- Automatically detect and convert them to base64
+The action uses Terraform's native functions to:
+- Automatically discover images using `fileset()` 
+- Convert them to base64 using `filebase64()`
 - Determine the correct file extension and format
-- Create the required JSON structure  
+- Create the required JSON structure for AWS Cognito
 - Apply them to your Cognito branding
 
 ## File Requirements
 
-The script automatically scans for image files with these extensions:
+Terraform automatically scans for image files with these extensions:
 - **PNG** files (`.png`)
 - **JPEG/JPG** files (`.jpg`, `.jpeg`) 
 - **ICO** files (`.ico`)
@@ -43,11 +44,20 @@ The script automatically scans for image files with these extensions:
   - Any PNG, JPG, JPEG, or SVG file
   - Category: FORM_LOGO
 
+## Repository Portability
+
+This structure works seamlessly across different repositories:
+- **Cross-repository support**: Works in any repository that uses this action
+- **Flexible naming**: Use any filename for your images
+- **Graceful handling**: Missing directories or files don't cause errors
+- **No dependencies**: Pure Terraform implementation, no external scripts
+- **Automatic detection**: Terraform discovers assets at plan/apply time
+
 ## File Constraints
 
-- **Maximum file size**: 2MB per asset
+- **Maximum file size**: 2MB per asset (AWS limitation)
 - **Color mode**: All assets use "LIGHT" mode by default
-- **Missing directories**: The action gracefully handles missing directories - only available assets will be processed
+- **Missing directories**: Terraform gracefully handles missing directories
 - **Multiple files**: If multiple images are found in a directory, all will be processed
 
 ## Example Usage
@@ -63,68 +73,149 @@ assets/
 ├── favicon/
 │   └── my-favicon.ico
 └── logo/
-    └── company-logo.png
+    └── company-logo.svg
 ```
 
 ```yaml
-- uses: alonch/actions-aws-auth@main
+- uses: your-org/actions-aws-auth@main
   with:
     name: my-app-auth
     enable_managed_login_branding: true
     branding_settings_file: "config/branding-settings.json"
 ```
 
-### Generated JSON Structure
+### Terraform Native Processing
 
-The action automatically creates this JSON structure from your images:
+The action automatically creates this structure using Terraform:
 
-```json
-[
-  {
-    "category": "PAGE_BACKGROUND",
-    "extension": "PNG",
-    "bytes": "base64-encoded-content-here",
-    "color_mode": "LIGHT"
-  },
-  {
-    "category": "FAVICON_ICO",
-    "extension": "ICO",
-    "bytes": "base64-encoded-content-here",
-    "color_mode": "LIGHT"
-  },
-  {
-    "category": "FORM_LOGO",
-    "extension": "PNG",
-    "bytes": "base64-encoded-content-here",
-    "color_mode": "LIGHT"
-  }
-]
+```hcl
+# Terraform automatically discovers and processes assets
+locals {
+  discovered_assets = flatten([
+    for dir_name, category in local.asset_directories : [
+      for ext in local.supported_extensions[dir_name] : [
+        for file_path in try(fileset("${var.assets_base_path}/assets/${dir_name}", "*.${ext}"), []) : {
+          category   = category
+          extension  = upper(ext == "jpg" ? "jpeg" : ext)
+          bytes      = filebase64("${var.assets_base_path}/assets/${dir_name}/${file_path}")
+          color_mode = "LIGHT"
+          file_path  = "${dir_name}/${file_path}"
+        }
+      ]
+    ]
+  ])
+}
 ```
 
-## Repository Portability
+### Generated Output
 
-This structure works across different repositories:
-- Missing assets or directories are handled gracefully
-- No errors if directories don't exist
-- Repositories without branding assets will use default Cognito styling
-- Flexible file naming - use any names you prefer
+View discovered assets in the action output:
 
-## Migration from Manual Setup
+```json
+{
+  "asset_count": 3,
+  "assets": [
+    {
+      "category": "PAGE_BACKGROUND",
+      "extension": "PNG",
+      "file_path": "background/company-background.png",
+      "size_kb": 45.2
+    },
+    {
+      "category": "FAVICON_ICO", 
+      "extension": "ICO",
+      "file_path": "favicon/my-favicon.ico",
+      "size_kb": 12.8
+    },
+    {
+      "category": "FORM_LOGO",
+      "extension": "SVG", 
+      "file_path": "logo/company-logo.svg",
+      "size_kb": 8.5
+    }
+  ]
+}
+```
 
-If you're migrating from manual asset management:
+## Benefits of Terraform Implementation
 
-1. Move your images to the new directory structure (any filenames are fine)
-2. Remove manual `branding_assets` or `branding_assets_file` parameters
-3. Set `enable_managed_login_branding: true`
-4. The action will handle the rest automatically
+### Native Processing
+- **No external dependencies**: Uses only Terraform built-in functions
+- **Better error handling**: Terraform validates files at plan time
+- **Consistent behavior**: Same processing across all environments
+
+### Performance
+- **Faster execution**: No shell scripts or external tools
+- **Efficient scanning**: Terraform's `fileset()` is optimized for file discovery
+- **Parallel processing**: Terraform handles multiple files efficiently
+
+### Reliability
+- **Type safety**: Terraform validates file types and structures
+- **Plan-time validation**: Catch issues before applying changes
+- **Idempotent**: Consistent results across multiple runs
 
 ## Troubleshooting
 
-- **Directory not found**: Create the directory structure if it doesn't exist
+### Common Issues
+- **Directory not found**: Create the `assets/` directory structure in your repository root
 - **Invalid format**: Ensure files are in supported formats (PNG, JPG, JPEG, ICO, SVG)
 - **File too large**: Ensure each file is under 2MB
-- **Repository structure**: Verify the `assets/` directory is in your repository root
-- **Multiple files**: If you have multiple files in one directory, all will be processed
+- **Permission errors**: Verify file permissions in your repository
+
+### Debugging Assets
+Check the `discovered_branding_assets` output to see what Terraform found:
+- Asset count and file paths
+- File sizes in KB
+- Categories and extensions
+- Any processing errors
+
+### Terraform Plan
+Run `terraform plan` to see what assets will be processed:
+```bash
+# The plan will show discovered assets
+terraform plan -var="assets_base_path=/path/to/your/repo"
+```
+
+## Migration from Script-based Approach
+
+If migrating from the previous shell script approach:
+
+1. **Remove manual configurations**: No need for `branding_assets_file` parameter
+2. **Use standard structure**: Place images in the expected directories
+3. **Enable branding**: Set `enable_managed_login_branding: true`
+4. **Terraform handles the rest**: No additional configuration needed
+
+## Advanced Configuration
+
+### Custom Asset Base Path
+For non-standard repository structures:
+
+```yaml
+- uses: your-org/actions-aws-auth@main
+  with:
+    name: my-app-auth
+    enable_managed_login_branding: true
+    # Terraform will look for assets at: custom/path/assets/
+```
+
+### Multiple Environments
+Assets are discovered per Terraform workspace:
+
+```yaml
+# Production
+- uses: your-org/actions-aws-auth@main
+  with:
+    name: myapp-prod
+    enable_managed_login_branding: true
+
+# Staging  
+- uses: your-org/actions-aws-auth@main
+  with:
+    name: myapp-staging
+    enable_managed_login_branding: true
+```
+
+Each deployment will use the same assets from your repository, ensuring consistency across environments.
 
 ## Supported Asset Types
 

@@ -1,5 +1,5 @@
 name: 'AWS Cognito Auth'
-description: 'Provision AWS Cognito User Pool for authentication using Terraform'
+description: 'Provision AWS Cognito User Pool for authentication using Terraform with automatic branding asset discovery'
 author: 'alonch'
 branding:
   icon: 'shield'
@@ -22,7 +22,7 @@ inputs:
     required: false
     default: 'https://example.com'
   enable_managed_login_branding:
-    description: 'Enable managed login branding for Cognito UI customization'
+    description: 'Enable managed login branding with automatic asset discovery from assets/ directory (background/, favicon/, logo/)'
     required: false
     default: 'false'
   branding_settings_file:
@@ -37,12 +37,18 @@ outputs:
   user_pool_arn:
     description: 'ARN of the Cognito User Pool'
     value: ${{ steps.outputs.outputs.user_pool_arn }}
-  client_id:
+  user_pool_client_id:
     description: 'ID of the Cognito User Pool Client'
-    value: ${{ steps.outputs.outputs.client_id }}
-  client_secret:
+    value: ${{ steps.outputs.outputs.user_pool_client_id }}
+  user_pool_client_secret:
     description: 'Secret of the Cognito User Pool Client'
-    value: ${{ steps.outputs.outputs.client_secret }}
+    value: ${{ steps.outputs.outputs.user_pool_client_secret }}
+  user_pool_domain:
+    description: 'Domain of the Cognito User Pool'
+    value: ${{ steps.outputs.outputs.user_pool_domain }}
+  login_url:
+    description: 'Complete login URL for the Cognito Hosted UI'
+    value: ${{ steps.outputs.outputs.login_url }}
   cognito_domain:
     description: 'Cognito provided domain URL'
     value: ${{ steps.outputs.outputs.cognito_domain }}
@@ -55,20 +61,13 @@ outputs:
   managed_login_branding_id:
     description: 'ID of the managed login branding resource'
     value: ${{ steps.outputs.outputs.managed_login_branding_id }}
-  hosted_ui_url:
-    description: 'Complete hosted UI URL for sign-in'
-    value: ${{ steps.outputs.outputs.hosted_ui_url }}
+  discovered_branding_assets:
+    description: 'Information about automatically discovered branding assets'
+    value: ${{ steps.outputs.outputs.discovered_branding_assets }}
 
 runs:
   using: "composite"
   steps:
-    - name: Process branding assets
-      if: inputs.enable_managed_login_branding == 'true'
-      run: |
-        chmod +x "${{ github.action_path }}/scripts/process_branding_assets.sh"
-        "${{ github.action_path }}/scripts/process_branding_assets.sh" "${{ inputs.enable_managed_login_branding }}" "${{ github.workspace }}"
-      shell: bash
-
     - name: Terraform init for apply/plan
       if: inputs.action != 'destroy'
       run: |
@@ -85,7 +84,7 @@ runs:
         TF_VAR_logout_urls: ${{ inputs.logout_urls }}
         TF_VAR_enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}
         TF_VAR_branding_settings_file: "${{ github.workspace }}/${{ inputs.branding_settings_file }}"
-        TF_VAR_branding_assets_file: "${{ github.workspace }}/.branding_assets.json"
+        TF_VAR_assets_base_path: "${{ github.workspace }}"
 
     - name: Terraform plan
       if: inputs.action == 'plan'
@@ -98,7 +97,7 @@ runs:
         TF_VAR_logout_urls: ${{ inputs.logout_urls }}
         TF_VAR_enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}
         TF_VAR_branding_settings_file: "${{ github.workspace }}/${{ inputs.branding_settings_file }}"
-        TF_VAR_branding_assets_file: "${{ github.workspace }}/.branding_assets.json"
+        TF_VAR_assets_base_path: "${{ github.workspace }}"
 
     - name: Terraform init and destroy
       if: inputs.action == 'destroy'
@@ -120,7 +119,7 @@ runs:
         TF_VAR_logout_urls: ${{ inputs.logout_urls }}
         TF_VAR_enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}
         TF_VAR_branding_settings_file: "${{ github.workspace }}/${{ inputs.branding_settings_file }}"
-        TF_VAR_branding_assets_file: "${{ github.workspace }}/.branding_assets.json"
+        TF_VAR_assets_base_path: "${{ github.workspace }}"
 
     - name: Terraform apply
       id: terraform
@@ -129,24 +128,28 @@ runs:
         terraform apply -auto-approve
         USER_POOL_ID=$(terraform output -raw user_pool_id | tr -d '\r\n')
         USER_POOL_ARN=$(terraform output -raw user_pool_arn | tr -d '\r\n')
-        CLIENT_ID=$(terraform output -raw client_id | tr -d '\r\n')
-        CLIENT_SECRET=$(terraform output -raw client_secret | tr -d '\r\n')
+        USER_POOL_CLIENT_ID=$(terraform output -raw user_pool_client_id | tr -d '\r\n')
+        USER_POOL_CLIENT_SECRET=$(terraform output -raw user_pool_client_secret | tr -d '\r\n')
+        USER_POOL_DOMAIN=$(terraform output -raw user_pool_domain | tr -d '\r\n')
+        LOGIN_URL=$(terraform output -raw login_url | tr -d '\r\n')
         COGNITO_DOMAIN=$(terraform output -raw cognito_domain | tr -d '\r\n')
         MANAGED_LOGIN_BRANDING_ENABLED=$(terraform output -raw managed_login_branding_enabled | tr -d '\r\n')
         MANAGED_LOGIN_VERSION=$(terraform output -raw managed_login_version | tr -d '\r\n')
         MANAGED_LOGIN_BRANDING_ID=$(terraform output -raw managed_login_branding_id | tr -d '\r\n')
-        HOSTED_UI_URL=$(terraform output -raw hosted_ui_url | tr -d '\r\n')
+        DISCOVERED_BRANDING_ASSETS=$(terraform output -json discovered_branding_assets | tr -d '\r\n')
 
         # Set outputs temporarily
         echo "user_pool_id=$USER_POOL_ID" >> "$GITHUB_OUTPUT"
         echo "user_pool_arn=$USER_POOL_ARN" >> "$GITHUB_OUTPUT"
-        echo "client_id=$CLIENT_ID" >> "$GITHUB_OUTPUT"
-        echo "client_secret=$CLIENT_SECRET" >> "$GITHUB_OUTPUT"
+        echo "user_pool_client_id=$USER_POOL_CLIENT_ID" >> "$GITHUB_OUTPUT"
+        echo "user_pool_client_secret=$USER_POOL_CLIENT_SECRET" >> "$GITHUB_OUTPUT"
+        echo "user_pool_domain=$USER_POOL_DOMAIN" >> "$GITHUB_OUTPUT"
+        echo "login_url=$LOGIN_URL" >> "$GITHUB_OUTPUT"
         echo "cognito_domain=$COGNITO_DOMAIN" >> "$GITHUB_OUTPUT"
         echo "managed_login_branding_enabled=$MANAGED_LOGIN_BRANDING_ENABLED" >> "$GITHUB_OUTPUT"
         echo "managed_login_version=$MANAGED_LOGIN_VERSION" >> "$GITHUB_OUTPUT"
         echo "managed_login_branding_id=$MANAGED_LOGIN_BRANDING_ID" >> "$GITHUB_OUTPUT"
-        echo "hosted_ui_url=$HOSTED_UI_URL" >> "$GITHUB_OUTPUT"
+        echo "discovered_branding_assets=$DISCOVERED_BRANDING_ASSETS" >> "$GITHUB_OUTPUT"
       shell: bash
       working-directory: ${{ github.action_path }}
       env:
@@ -155,7 +158,7 @@ runs:
         TF_VAR_logout_urls: ${{ inputs.logout_urls }}
         TF_VAR_enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}
         TF_VAR_branding_settings_file: "${{ github.workspace }}/${{ inputs.branding_settings_file }}"
-        TF_VAR_branding_assets_file: "${{ github.workspace }}/.branding_assets.json"
+        TF_VAR_assets_base_path: "${{ github.workspace }}"
 
     - name: Set final outputs
       id: outputs
@@ -165,22 +168,26 @@ runs:
           # For destroy action, we don't have meaningful outputs
           echo "user_pool_id=destroyed" >> "$GITHUB_OUTPUT"
           echo "user_pool_arn=destroyed" >> "$GITHUB_OUTPUT"
-          echo "client_id=destroyed" >> "$GITHUB_OUTPUT"
-          echo "client_secret=destroyed" >> "$GITHUB_OUTPUT"
+          echo "user_pool_client_id=destroyed" >> "$GITHUB_OUTPUT"
+          echo "user_pool_client_secret=destroyed" >> "$GITHUB_OUTPUT"
+          echo "user_pool_domain=destroyed" >> "$GITHUB_OUTPUT"
+          echo "login_url=destroyed" >> "$GITHUB_OUTPUT"
           echo "cognito_domain=destroyed" >> "$GITHUB_OUTPUT"
           echo "managed_login_branding_enabled=destroyed" >> "$GITHUB_OUTPUT"
           echo "managed_login_version=destroyed" >> "$GITHUB_OUTPUT"
           echo "managed_login_branding_id=destroyed" >> "$GITHUB_OUTPUT"
-          echo "hosted_ui_url=destroyed" >> "$GITHUB_OUTPUT"
+          echo "discovered_branding_assets=destroyed" >> "$GITHUB_OUTPUT"
         else
           # Always use Terraform outputs for apply/plan actions
           echo "user_pool_id=${{ steps.terraform.outputs.user_pool_id }}" >> "$GITHUB_OUTPUT"
           echo "user_pool_arn=${{ steps.terraform.outputs.user_pool_arn }}" >> "$GITHUB_OUTPUT"
-          echo "client_id=${{ steps.terraform.outputs.client_id }}" >> "$GITHUB_OUTPUT"
-          echo "client_secret=${{ steps.terraform.outputs.client_secret }}" >> "$GITHUB_OUTPUT"
+          echo "user_pool_client_id=${{ steps.terraform.outputs.user_pool_client_id }}" >> "$GITHUB_OUTPUT"
+          echo "user_pool_client_secret=${{ steps.terraform.outputs.user_pool_client_secret }}" >> "$GITHUB_OUTPUT"
+          echo "user_pool_domain=${{ steps.terraform.outputs.user_pool_domain }}" >> "$GITHUB_OUTPUT"
+          echo "login_url=${{ steps.terraform.outputs.login_url }}" >> "$GITHUB_OUTPUT"
           echo "cognito_domain=${{ steps.terraform.outputs.cognito_domain }}" >> "$GITHUB_OUTPUT"
           echo "managed_login_branding_enabled=${{ steps.terraform.outputs.managed_login_branding_enabled }}" >> "$GITHUB_OUTPUT"
           echo "managed_login_version=${{ steps.terraform.outputs.managed_login_version }}" >> "$GITHUB_OUTPUT"
           echo "managed_login_branding_id=${{ steps.terraform.outputs.managed_login_branding_id }}" >> "$GITHUB_OUTPUT"
-          echo "hosted_ui_url=${{ steps.terraform.outputs.hosted_ui_url }}" >> "$GITHUB_OUTPUT"
+          echo "discovered_branding_assets=${{ steps.terraform.outputs.discovered_branding_assets }}" >> "$GITHUB_OUTPUT"
         fi

@@ -6,7 +6,7 @@ resource "random_id" "suffix" {
   byte_length = 4
 }
 
-# Read branding settings from JSON file if provided
+# Discover image files in assets directories
 locals {
   user_pool_name = var.name
   # Parse comma-separated URLs into lists
@@ -17,8 +17,40 @@ locals {
   # The AWS CloudFormation resource expects a JSON string, not a parsed object
   branding_settings = var.enable_managed_login_branding && var.branding_settings_file != "" ? try(file(var.branding_settings_file), null) : null
   
-  # Parse branding assets from automatically generated file
-  branding_assets = var.enable_managed_login_branding && var.branding_assets_file != "" ? try(jsondecode(file(var.branding_assets_file)), []) : []
+  # Define asset directory mappings
+  asset_directories = {
+    "background" = "PAGE_BACKGROUND"
+    "favicon"    = "FAVICON_ICO"
+    "logo"       = "FORM_LOGO"
+  }
+  
+  # Supported image extensions by directory
+  supported_extensions = {
+    "background" = ["png", "jpg", "jpeg", "svg"]
+    "favicon"    = ["ico", "png"]
+    "logo"       = ["png", "jpg", "jpeg", "svg"]
+  }
+  
+  # Base path for assets - use workspace root
+  assets_base_path = var.assets_base_path != "" ? var.assets_base_path : path.cwd
+  
+  # Scan for image files in each asset directory
+  discovered_assets = flatten([
+    for dir_name, category in local.asset_directories : [
+      for ext in local.supported_extensions[dir_name] : [
+        for file_path in try(fileset("${local.assets_base_path}/assets/${dir_name}", "*.${ext}"), []) : {
+          category   = category
+          extension  = upper(ext == "jpg" ? "jpeg" : ext)
+          bytes      = filebase64("${local.assets_base_path}/assets/${dir_name}/${file_path}")
+          color_mode = "LIGHT"
+          file_path  = "${dir_name}/${file_path}"
+        }
+      ]
+    ]
+  ])
+  
+  # Convert to the format expected by the managed login branding resource
+  branding_assets = var.enable_managed_login_branding ? local.discovered_assets : []
 }
 
 # Create Cognito User Pool
@@ -109,7 +141,7 @@ resource "awscc_cognito_managed_login_branding" "this" {
   # Apply branding settings from JSON file as string (only if settings file is provided)
   settings = local.branding_settings != null ? local.branding_settings : "{}"
   
-  # Add branding assets as direct argument, not dynamic block
+  # Add automatically discovered branding assets
   assets = local.branding_assets
 
   # Ensure domain is created first to enable managed login

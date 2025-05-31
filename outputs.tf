@@ -8,15 +8,40 @@ output "user_pool_arn" {
   value       = aws_cognito_user_pool.this.arn
 }
 
-output "client_id" {
+output "user_pool_client_id" {
   description = "ID of the Cognito User Pool Client"
   value       = aws_cognito_user_pool_client.this.id
 }
 
-output "client_secret" {
+output "user_pool_client_secret" {
   description = "Secret of the Cognito User Pool Client"
   value       = aws_cognito_user_pool_client.this.client_secret
   sensitive   = true
+}
+
+output "user_pool_domain" {
+  description = "Domain of the Cognito User Pool"
+  value       = aws_cognito_user_pool_domain.this.domain
+}
+
+output "login_url" {
+  description = "Login URL for the Cognito Hosted UI"
+  value       = "https://${aws_cognito_user_pool_domain.this.domain}.auth.${data.aws_region.current.name}.amazoncognito.com/login?client_id=${aws_cognito_user_pool_client.this.id}&response_type=code&scope=email+openid+profile&redirect_uri=${split(",", var.callback_urls)[0]}"
+}
+
+output "discovered_branding_assets" {
+  description = "Information about automatically discovered branding assets"
+  value = var.enable_managed_login_branding ? {
+    asset_count = length(local.branding_assets)
+    assets = [
+      for asset in local.branding_assets : {
+        category  = asset.category
+        extension = asset.extension
+        file_path = asset.file_path
+        size_kb   = length(asset.bytes) / 1024
+      }
+    ]
+  } : null
 }
 
 output "cognito_domain" {

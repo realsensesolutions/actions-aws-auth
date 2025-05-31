@@ -21,7 +21,7 @@ variable "logout_urls" {
 }
 
 variable "enable_managed_login_branding" {
-  description = "Enable managed login branding for Cognito UI customization"
+  description = "Enable managed login branding for Cognito UI customization with automatic asset discovery from assets/ directory"
   type        = bool
   default     = false
 }
@@ -32,8 +32,8 @@ variable "branding_settings_file" {
   default     = ""
 }
 
-variable "branding_assets_file" {
-  description = "Path to JSON file containing branding assets for managed login (automatically generated from assets/)"
+variable "assets_base_path" {
+  description = "Base path where to look for assets/ directory. Defaults to current working directory"
   type        = string
   default     = ""
 }
