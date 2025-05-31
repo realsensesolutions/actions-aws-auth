@@ -13,10 +13,82 @@ OUTPUT_FILE="$WORKSPACE_PATH/.branding_assets.json"
 
 echo "Processing branding assets from workspace: $WORKSPACE_PATH"
 
-# Initialize empty array
-ASSETS="[]"
+# Ensure Python is available
+if ! command -v python3 >/dev/null 2>&1; then
+    echo "Error: python3 is required but not installed"
+    exit 1
+fi
 
-# Function to add asset to JSON array
+# Create Python script to handle JSON construction
+PYTHON_SCRIPT=$(cat << 'EOF'
+import json
+import base64
+import sys
+import os
+
+def add_asset_to_file(output_file, category, extension, file_path, color_mode):
+    """Add a single asset to the JSON file"""
+    try:
+        # Read and encode the image file
+        with open(file_path, 'rb') as f:
+            image_data = f.read()
+            base64_content = base64.b64encode(image_data).decode('utf-8')
+        
+        # Create asset object
+        asset = {
+            "category": category,
+            "extension": extension,
+            "bytes": base64_content,
+            "color_mode": color_mode
+        }
+        
+        # Read existing assets or start with empty list
+        assets = []
+        if os.path.exists(output_file):
+            try:
+                with open(output_file, 'r') as f:
+                    content = f.read().strip()
+                    if content:
+                        assets = json.loads(content)
+            except (json.JSONDecodeError, FileNotFoundError):
+                assets = []
+        
+        # Add new asset
+        assets.append(asset)
+        
+        # Write back to file
+        with open(output_file, 'w') as f:
+            json.dump(assets, f, indent=2)
+        
+        return True
+        
+    except Exception as e:
+        print(f"Error processing {file_path}: {e}", file=sys.stderr)
+        return False
+
+if __name__ == "__main__":
+    if len(sys.argv) != 6:
+        print("Usage: python3 script.py <output_file> <category> <extension> <file_path> <color_mode>", file=sys.stderr)
+        sys.exit(1)
+    
+    output_file, category, extension, file_path, color_mode = sys.argv[1:6]
+    
+    if add_asset_to_file(output_file, category, extension, file_path, color_mode):
+        print(f"Successfully added {category} asset from {os.path.basename(file_path)}")
+        sys.exit(0)
+    else:
+        sys.exit(1)
+EOF
+)
+
+# Save Python script to temporary file
+TEMP_PYTHON_SCRIPT="/tmp/process_asset.py"
+echo "$PYTHON_SCRIPT" > "$TEMP_PYTHON_SCRIPT"
+
+# Initialize empty JSON file
+echo "[]" > "$OUTPUT_FILE"
+
+# Function to add asset using Python
 add_asset() {
     local category="$1"
     local extension="$2"
@@ -26,54 +98,12 @@ add_asset() {
     if [ -f "$file_path" ]; then
         echo "Processing $file_path for category $category"
         
-        # Check file size (2MB limit)
-        local file_size=$(stat -f%z "$file_path" 2>/dev/null || stat -c%s "$file_path" 2>/dev/null)
-        if [ "$file_size" -gt 2097152 ]; then
-            echo "Warning: $file_path is larger than 2MB ($file_size bytes), skipping"
-            return
-        fi
-        
-        # Convert image to base64
-        local base64_content
-        if command -v base64 >/dev/null 2>&1; then
-            # Linux/macOS base64 command
-            base64_content=$(base64 -w 0 < "$file_path" 2>/dev/null || base64 < "$file_path" | tr -d '\n')
+        # Use Python to add the asset
+        if python3 "$TEMP_PYTHON_SCRIPT" "$OUTPUT_FILE" "$category" "$extension" "$file_path" "$color_mode"; then
+            echo "Added $category asset"
         else
-            echo "Error: base64 command not found"
-            exit 1
+            echo "Failed to add $category asset"
         fi
-        
-        # Create temporary file for the new asset JSON
-        local temp_asset_file=$(mktemp)
-        
-        # Write the asset JSON to temporary file using jq to ensure proper escaping
-        jq -n \
-            --arg category "$category" \
-            --arg extension "$extension" \
-            --arg bytes "$base64_content" \
-            --arg color_mode "$color_mode" \
-            '{
-                category: $category,
-                extension: $extension,
-                bytes: $bytes,
-                color_mode: $color_mode
-            }' > "$temp_asset_file"
-        
-        # Create temporary file for current assets
-        local temp_current_file=$(mktemp)
-        echo "$ASSETS" > "$temp_current_file"
-        
-        # Merge the new asset with existing assets using jq
-        local temp_result_file=$(mktemp)
-        jq --slurpfile new_asset "$temp_asset_file" '. += $new_asset' "$temp_current_file" > "$temp_result_file"
-        
-        # Read the result back
-        ASSETS=$(cat "$temp_result_file")
-        
-        # Clean up temporary files
-        rm -f "$temp_asset_file" "$temp_current_file" "$temp_result_file"
-        
-        echo "Added $category asset"
     else
         echo "Warning: $file_path not found, skipping $category asset"
     fi
@@ -92,8 +122,14 @@ process_directory() {
     
     echo "Scanning directory: $dir_path"
     
-    # Find all image files in the directory and process them
-    while IFS= read -r -d '' file_path; do
+    # Find all image files in the directory
+    find "$dir_path" -maxdepth 1 -type f \( \
+        -iname "*.png" -o \
+        -iname "*.jpg" -o \
+        -iname "*.jpeg" -o \
+        -iname "*.ico" -o \
+        -iname "*.svg" \
+    \) | while read -r file_path; do
         if [ -f "$file_path" ]; then
             # Get file extension and convert to uppercase
             extension=$(basename "$file_path" | sed 's/.*\.//' | tr '[:lower:]' '[:upper:]')
@@ -106,20 +142,8 @@ process_directory() {
             echo "Found image: $(basename "$file_path") with extension: $extension"
             add_asset "$category" "$extension" "$file_path" "$color_mode"
         fi
-    done < <(find "$dir_path" -maxdepth 1 -type f \( \
-        -iname "*.png" -o \
-        -iname "*.jpg" -o \
-        -iname "*.jpeg" -o \
-        -iname "*.ico" -o \
-        -iname "*.svg" \
-    \) -print0)
+    done
 }
-
-# Ensure jq is available
-if ! command -v jq >/dev/null 2>&1; then
-    echo "Error: jq is required but not installed"
-    exit 1
-fi
 
 # Process assets from different directories
 echo "Searching for branding assets in standard directories..."
@@ -133,8 +157,14 @@ process_directory "$WORKSPACE_PATH/assets/favicon" "FAVICON_ICO" "LIGHT"
 # Process logo images
 process_directory "$WORKSPACE_PATH/assets/logo" "FORM_LOGO" "LIGHT"
 
-# Write the final JSON array to file
-echo "$ASSETS" | jq '.' > "$OUTPUT_FILE"
+# Clean up temporary Python script
+rm -f "$TEMP_PYTHON_SCRIPT"
 
-echo "Branding assets processed and saved to $OUTPUT_FILE"
-echo "Generated $(echo "$ASSETS" | jq 'length') assets" 
+# Count and display results
+if [ -f "$OUTPUT_FILE" ]; then
+    ASSET_COUNT=$(python3 -c "import json; print(len(json.load(open('$OUTPUT_FILE'))))")
+    echo "Branding assets processed and saved to $OUTPUT_FILE"
+    echo "Generated $ASSET_COUNT assets"
+else
+    echo "No output file created"
+fi 
