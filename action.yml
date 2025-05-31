@@ -177,8 +177,8 @@ runs:
           echo "managed_login_version=destroyed" >> "$GITHUB_OUTPUT"
           echo "managed_login_branding_id=destroyed" >> "$GITHUB_OUTPUT"
           echo "discovered_branding_assets=destroyed" >> "$GITHUB_OUTPUT"
-        else
-          # Always use Terraform outputs for apply/plan actions
+        elif [ "${{ inputs.action }}" == "apply" ]; then
+          # Use outputs from apply step
           echo "user_pool_id=${{ steps.terraform.outputs.user_pool_id }}" >> "$GITHUB_OUTPUT"
           echo "user_pool_arn=${{ steps.terraform.outputs.user_pool_arn }}" >> "$GITHUB_OUTPUT"
           echo "user_pool_client_id=${{ steps.terraform.outputs.user_pool_client_id }}" >> "$GITHUB_OUTPUT"
@@ -190,4 +190,17 @@ runs:
           echo "managed_login_version=${{ steps.terraform.outputs.managed_login_version }}" >> "$GITHUB_OUTPUT"
           echo "managed_login_branding_id=${{ steps.terraform.outputs.managed_login_branding_id }}" >> "$GITHUB_OUTPUT"
           echo "discovered_branding_assets=${{ steps.terraform.outputs.discovered_branding_assets }}" >> "$GITHUB_OUTPUT"
+        else
+          # For plan action, set placeholder values
+          echo "user_pool_id=planned" >> "$GITHUB_OUTPUT"
+          echo "user_pool_arn=planned" >> "$GITHUB_OUTPUT"
+          echo "user_pool_client_id=planned" >> "$GITHUB_OUTPUT"
+          echo "user_pool_client_secret=planned" >> "$GITHUB_OUTPUT"
+          echo "user_pool_domain=planned" >> "$GITHUB_OUTPUT"
+          echo "login_url=planned" >> "$GITHUB_OUTPUT"
+          echo "cognito_domain=planned" >> "$GITHUB_OUTPUT"
+          echo "managed_login_branding_enabled=planned" >> "$GITHUB_OUTPUT"
+          echo "managed_login_version=planned" >> "$GITHUB_OUTPUT"
+          echo "managed_login_branding_id=planned" >> "$GITHUB_OUTPUT"
+          echo "discovered_branding_assets=planned" >> "$GITHUB_OUTPUT"
         fi
