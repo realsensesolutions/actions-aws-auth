@@ -128,8 +128,8 @@ runs:
         terraform apply -auto-approve
         USER_POOL_ID=$(terraform output -raw user_pool_id | tr -d '\r\n')
         USER_POOL_ARN=$(terraform output -raw user_pool_arn | tr -d '\r\n')
-        CLIENT_ID=$(terraform output -raw client_id | tr -d '\r\n')
-        CLIENT_SECRET=$(terraform output -raw client_secret | tr -d '\r\n')
+        CLIENT_ID=$(terraform output -raw user_pool_client_id | tr -d '\r\n')
+        CLIENT_SECRET=$(terraform output -raw user_pool_client_secret | tr -d '\r\n')
         USER_POOL_DOMAIN=$(terraform output -raw user_pool_domain | tr -d '\r\n')
         LOGIN_URL=$(terraform output -raw login_url | tr -d '\r\n')
         COGNITO_DOMAIN=$(terraform output -raw cognito_domain | tr -d '\r\n')
