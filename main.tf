@@ -13,9 +13,31 @@ locals {
   callback_urls = split(",", var.callback_urls)
   logout_urls   = split(",", var.logout_urls)
   
-  # Read branding settings from JSON file as string if provided and file exists
-  # The AWS CloudFormation resource expects a JSON string, not a parsed object
-  branding_settings = var.enable_managed_login_branding && var.branding_settings_file != "" ? try(file(var.branding_settings_file), null) : null
+  # Create branding settings using the example as base and modify form location
+  base_branding_settings = jsondecode(file("${path.module}/config/branding-settings-example.json"))
+  
+  # Modify the form location based on login_position if managed login branding is enabled
+  branding_settings_json = var.enable_managed_login_branding ? jsonencode(merge(
+    local.base_branding_settings,
+    {
+      categories = merge(
+        local.base_branding_settings.categories,
+        {
+          form = merge(
+            local.base_branding_settings.categories.form,
+            {
+              location = merge(
+                local.base_branding_settings.categories.form.location,
+                {
+                  horizontal = var.login_position
+                }
+              )
+            }
+          )
+        }
+      )
+    }
+  )) : null
   
   # Define asset directory mappings
   asset_directories = {
@@ -138,8 +160,8 @@ resource "awscc_cognito_managed_login_branding" "this" {
   user_pool_id = aws_cognito_user_pool.this.id
   client_id    = aws_cognito_user_pool_client.this.id
   
-  # Apply branding settings from JSON file as string (only if settings file is provided)
-  settings = local.branding_settings != null ? local.branding_settings : "{}"
+  # Apply branding settings with custom form location
+  settings = local.branding_settings_json != null ? local.branding_settings_json : "{}"
   
   # Add automatically discovered branding assets
   assets = local.branding_assets

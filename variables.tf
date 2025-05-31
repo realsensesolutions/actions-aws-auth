@@ -26,10 +26,15 @@ variable "enable_managed_login_branding" {
   default     = false
 }
 
-variable "branding_settings_file" {
-  description = "Path to JSON file containing branding settings for managed login"
+variable "login_position" {
+  description = "Login form horizontal position: START, CENTER, or END (only works when enable_managed_login_branding is true)"
   type        = string
-  default     = ""
+  default     = "CENTER"
+  
+  validation {
+    condition     = contains(["START", "CENTER", "END"], var.login_position)
+    error_message = "Login position must be one of: START, CENTER, END"
+  }
 }
 
 variable "assets_base_path" {

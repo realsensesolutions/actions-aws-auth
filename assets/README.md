@@ -81,7 +81,7 @@ assets/
   with:
     name: my-app-auth
     enable_managed_login_branding: true
-    branding_settings_file: "config/branding-settings.json"
+    login_position: "CENTER"
 ```
 
 ### Terraform Native Processing

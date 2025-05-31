@@ -73,7 +73,7 @@ jobs:
 
 ### Advanced Example with Managed Login Branding
 
-**Option 1: Using JSON string for branding assets**
+**Option 1: Using automatic branding with custom login position**
 
 ```yaml
 - uses: alonch/actions-aws-auth@main
@@ -82,19 +82,10 @@ jobs:
     callback_urls: "https://app.example.com/auth/callback,https://admin.example.com/callback"
     logout_urls: "https://app.example.com,https://admin.example.com"
     enable_managed_login_branding: true
-    branding_settings_file: "branding-settings.json"
-    branding_assets: |
-      [
-        {
-          "category": "LOGO",
-          "extension": "png",
-          "bytes": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
-          "color_mode": "LIGHT"
-        }
-      ]
+    login_position: "START"
 ```
 
-**Option 2: Using file for branding assets (recommended for multiple assets)**
+**Option 2: Using default center position (recommended)**
 
 ```yaml
 - uses: alonch/actions-aws-auth@main
@@ -103,8 +94,7 @@ jobs:
     callback_urls: "https://app.example.com/auth/callback,https://admin.example.com/callback"
     logout_urls: "https://app.example.com,https://admin.example.com"
     enable_managed_login_branding: true
-    branding_settings_file: "config/branding-settings.json"
-    branding_assets_file: "config/branding-assets.json"
+    login_position: "CENTER"
 ```
 
 ## Inputs
@@ -115,7 +105,7 @@ jobs:
 | `callback_urls` | Comma-separated list of callback URLs for OAuth | ❌ No | `https://example.com/callback` |
 | `logout_urls` | Comma-separated list of logout URLs for OAuth | ❌ No | `https://example.com` |
 | `enable_managed_login_branding` | Enable managed login branding for custom UI | ❌ No | `false` |
-| `branding_settings_file` | Path to JSON file with branding settings | ❌ No | `""` |
+| `login_position` | Login form horizontal position: START, CENTER, or END | ❌ No | `CENTER` |
 | `action` | Desired outcome: `apply`, `plan`, or `destroy` | ❌ No | `apply` |
 
 > **Note**: When `enable_managed_login_branding` is true, the action will automatically process image files from your repository in these directories:
@@ -124,6 +114,7 @@ jobs:
 > - `assets/logo/` → FORM_LOGO (PNG, JPG, JPEG, SVG files)
 > 
 > Any filename is supported in each directory. The action will gracefully handle missing directories without errors.
+> The `login_position` parameter only works when `enable_managed_login_branding` is true.
 
 ## Outputs
 
@@ -271,7 +262,7 @@ jobs:
           callback_urls: "https://mycompany.com/auth/callback"
           logout_urls: "https://mycompany.com"
           enable_managed_login_branding: true
-          branding_settings_file: "config/branding-settings.json"
+          login_position: "CENTER"
 ```
 
 **Required directory structure:**
@@ -281,9 +272,9 @@ your-repo/
 │   ├── background/
 │   │   └── [any image file]      # → PAGE_BACKGROUND (PNG, JPG, JPEG, SVG formats)
 │   ├── favicon/
-│   │   └── [any image file]      # → FAVICON_ICO (ICO, PNG formats)
+│   │   └── [any image file]      # → FAVICON_ICO (ICO, PNG files)
 │   └── logo/
-│       └── [any image file]      # → FORM_LOGO (PNG, JPG, JPEG, SVG formats)
+│       └── [any image file]      # → FORM_LOGO (PNG, JPG, JPEG, SVG files)
 └── config/
     └── branding-settings.json
 ```
@@ -360,8 +351,7 @@ jobs:
           callback_urls: "https://mycompany.com/auth/callback"
           logout_urls: "https://mycompany.com"
           enable_managed_login_branding: true
-          branding_settings_file: "branding/settings.json"
-          branding_assets_file: "branding/assets.json"
+          login_position: "END"
       
       - name: Display results
         run: |
@@ -415,14 +405,15 @@ This action provides flexible ways to configure branding for your Cognito authen
 - Works in any repository without additional files
 
 ### 2. Settings Only
-- Use `branding_settings_file` to customize colors, text, and styling
-- No custom assets (logos, icons) required
-- Lightweight branding approach
+- Use `login_position` parameter to customize form positioning: START, CENTER, or END
+- Works with automatic branding asset discovery from assets/ directory
+- Lightweight positioning approach
 
-### 3. Full Branding with Inline Assets
-- Use `branding_assets` parameter with base64-encoded asset data
-- Suitable for simple setups with few assets
-- All configuration in the workflow file
+### 3. Full Branding with Automatic Asset Discovery (Recommended)
+- Set `enable_managed_login_branding: true` to enable automatic asset scanning
+- Use `login_position` parameter to position the login form
+- Place your images in assets/background/, assets/favicon/, assets/logo/ directories
+- Action automatically handles file discovery and conversion
 
 ### 4. Full Branding with File Assets (Recommended)
 - Use `branding_assets_file` parameter pointing to a JSON file
@@ -527,22 +518,7 @@ AWS Cognito Managed Login provides advanced customization options for your authe
   with:
     name: branded-auth
     enable_managed_login_branding: true
-    branding_settings_file: "branding-settings.json"
-    branding_assets: |
-      [
-        {
-          "category": "LOGO",
-          "extension": "png", 
-          "bytes": "${{ base64_encode_file('assets/logo.png') }}",
-          "color_mode": "LIGHT"
-        },
-        {
-          "category": "FAVICON",
-          "extension": "ico",
-          "bytes": "${{ base64_encode_file('assets/favicon.ico') }}",
-          "color_mode": "LIGHT"
-        }
-      ]
+    login_position: "CENTER"
 ```
 
 ### Branding Assets
