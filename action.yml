@@ -29,6 +29,18 @@ inputs:
     description: 'Login form horizontal position: START, CENTER, or END (only works when enable_managed_login_branding is true)'
     required: false
     default: 'CENTER'
+  enable_google_identity_provider:
+    description: 'Enable Google identity provider for Cognito User Pool'
+    required: false
+    default: 'false'
+  google_client_id:
+    description: 'Google OAuth 2.0 client ID (required when enable_google_identity_provider is true)'
+    required: false
+    default: ''
+  google_client_secret:
+    description: 'Google OAuth 2.0 client secret (required when enable_google_identity_provider is true)'
+    required: false
+    default: ''
 
 outputs:
   user_pool_id:
@@ -64,6 +76,15 @@ outputs:
   hosted_ui_url:
     description: 'Complete hosted UI URL for sign-in'
     value: ${{ steps.outputs.outputs.hosted_ui_url }}
+  google_identity_provider_enabled:
+    description: 'Whether Google identity provider is enabled'
+    value: ${{ steps.outputs.outputs.google_identity_provider_enabled }}
+  google_identity_provider_name:
+    description: 'Name of the Google identity provider (if enabled)'
+    value: ${{ steps.outputs.outputs.google_identity_provider_name }}
+  supported_identity_providers:
+    description: 'List of supported identity providers'
+    value: ${{ steps.outputs.outputs.supported_identity_providers }}
 
 runs:
   using: "composite"
@@ -84,6 +105,9 @@ runs:
         TF_VAR_logout_urls: ${{ inputs.logout_urls }}
         TF_VAR_enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}
         TF_VAR_login_position: ${{ inputs.login_position }}
+        TF_VAR_enable_google_identity_provider: ${{ inputs.enable_google_identity_provider }}
+        TF_VAR_google_client_id: ${{ inputs.google_client_id }}
+        TF_VAR_google_client_secret: ${{ inputs.google_client_secret }}
         TF_VAR_assets_base_path: "${{ github.workspace }}"
 
     - name: Terraform plan
@@ -97,6 +121,9 @@ runs:
         TF_VAR_logout_urls: ${{ inputs.logout_urls }}
         TF_VAR_enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}
         TF_VAR_login_position: ${{ inputs.login_position }}
+        TF_VAR_enable_google_identity_provider: ${{ inputs.enable_google_identity_provider }}
+        TF_VAR_google_client_id: ${{ inputs.google_client_id }}
+        TF_VAR_google_client_secret: ${{ inputs.google_client_secret }}
         TF_VAR_assets_base_path: "${{ github.workspace }}"
 
     - name: Terraform init and destroy
@@ -119,6 +146,9 @@ runs:
         TF_VAR_logout_urls: ${{ inputs.logout_urls }}
         TF_VAR_enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}
         TF_VAR_login_position: ${{ inputs.login_position }}
+        TF_VAR_enable_google_identity_provider: ${{ inputs.enable_google_identity_provider }}
+        TF_VAR_google_client_id: ${{ inputs.google_client_id }}
+        TF_VAR_google_client_secret: ${{ inputs.google_client_secret }}
         TF_VAR_assets_base_path: "${{ github.workspace }}"
 
     - name: Terraform apply
@@ -137,6 +167,9 @@ runs:
         MANAGED_LOGIN_VERSION=$(terraform output -raw managed_login_version | tr -d '\r\n')
         MANAGED_LOGIN_BRANDING_ID=$(terraform output -raw managed_login_branding_id | tr -d '\r\n')
         HOSTED_UI_URL=$(terraform output -raw hosted_ui_url | tr -d '\r\n')
+        GOOGLE_IDENTITY_PROVIDER_ENABLED=$(terraform output -raw google_identity_provider_enabled | tr -d '\r\n')
+        GOOGLE_IDENTITY_PROVIDER_NAME=$(terraform output -raw google_identity_provider_name | tr -d '\r\n')
+        SUPPORTED_IDENTITY_PROVIDERS=$(terraform output -raw supported_identity_providers | tr -d '\r\n')
 
         # Set outputs temporarily
         echo "user_pool_id=$USER_POOL_ID" >> "$GITHUB_OUTPUT"
@@ -150,6 +183,9 @@ runs:
         echo "managed_login_version=$MANAGED_LOGIN_VERSION" >> "$GITHUB_OUTPUT"
         echo "managed_login_branding_id=$MANAGED_LOGIN_BRANDING_ID" >> "$GITHUB_OUTPUT"
         echo "hosted_ui_url=$HOSTED_UI_URL" >> "$GITHUB_OUTPUT"
+        echo "google_identity_provider_enabled=$GOOGLE_IDENTITY_PROVIDER_ENABLED" >> "$GITHUB_OUTPUT"
+        echo "google_identity_provider_name=$GOOGLE_IDENTITY_PROVIDER_NAME" >> "$GITHUB_OUTPUT"
+        echo "supported_identity_providers=$SUPPORTED_IDENTITY_PROVIDERS" >> "$GITHUB_OUTPUT"
       shell: bash
       working-directory: ${{ github.action_path }}
       env:
@@ -158,6 +194,9 @@ runs:
         TF_VAR_logout_urls: ${{ inputs.logout_urls }}
         TF_VAR_enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}
         TF_VAR_login_position: ${{ inputs.login_position }}
+        TF_VAR_enable_google_identity_provider: ${{ inputs.enable_google_identity_provider }}
+        TF_VAR_google_client_id: ${{ inputs.google_client_id }}
+        TF_VAR_google_client_secret: ${{ inputs.google_client_secret }}
         TF_VAR_assets_base_path: "${{ github.workspace }}"
 
     - name: Set final outputs
@@ -177,6 +216,9 @@ runs:
           echo "managed_login_version=destroyed" >> "$GITHUB_OUTPUT"
           echo "managed_login_branding_id=destroyed" >> "$GITHUB_OUTPUT"
           echo "hosted_ui_url=destroyed" >> "$GITHUB_OUTPUT"
+          echo "google_identity_provider_enabled=destroyed" >> "$GITHUB_OUTPUT"
+          echo "google_identity_provider_name=destroyed" >> "$GITHUB_OUTPUT"
+          echo "supported_identity_providers=destroyed" >> "$GITHUB_OUTPUT"
         elif [ "${{ inputs.action }}" == "apply" ]; then
           # Use outputs from apply step
           echo "user_pool_id=${{ steps.terraform.outputs.user_pool_id }}" >> "$GITHUB_OUTPUT"
@@ -190,6 +232,9 @@ runs:
           echo "managed_login_version=${{ steps.terraform.outputs.managed_login_version }}" >> "$GITHUB_OUTPUT"
           echo "managed_login_branding_id=${{ steps.terraform.outputs.managed_login_branding_id }}" >> "$GITHUB_OUTPUT"
           echo "hosted_ui_url=${{ steps.terraform.outputs.hosted_ui_url }}" >> "$GITHUB_OUTPUT"
+          echo "google_identity_provider_enabled=${{ steps.terraform.outputs.google_identity_provider_enabled }}" >> "$GITHUB_OUTPUT"
+          echo "google_identity_provider_name=${{ steps.terraform.outputs.google_identity_provider_name }}" >> "$GITHUB_OUTPUT"
+          echo "supported_identity_providers=${{ steps.terraform.outputs.supported_identity_providers }}" >> "$GITHUB_OUTPUT"
         else
           # For plan action, set placeholder values
           echo "user_pool_id=planned" >> "$GITHUB_OUTPUT"
@@ -203,4 +248,7 @@ runs:
           echo "managed_login_version=planned" >> "$GITHUB_OUTPUT"
           echo "managed_login_branding_id=planned" >> "$GITHUB_OUTPUT"
           echo "hosted_ui_url=planned" >> "$GITHUB_OUTPUT"
+          echo "google_identity_provider_enabled=planned" >> "$GITHUB_OUTPUT"
+          echo "google_identity_provider_name=planned" >> "$GITHUB_OUTPUT"
+          echo "supported_identity_providers=planned" >> "$GITHUB_OUTPUT"
         fi

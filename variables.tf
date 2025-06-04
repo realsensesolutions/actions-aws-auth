@@ -42,3 +42,23 @@ variable "assets_base_path" {
   type        = string
   default     = ""
 }
+
+variable "enable_google_identity_provider" {
+  description = "Enable Google identity provider for Cognito User Pool"
+  type        = bool
+  default     = false
+}
+
+variable "google_client_id" {
+  description = "Google OAuth 2.0 client ID (required when enable_google_identity_provider is true)"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "google_client_secret" {
+  description = "Google OAuth 2.0 client secret (required when enable_google_identity_provider is true)"
+  type        = string
+  default     = ""
+  sensitive   = true
+}

@@ -107,6 +107,72 @@ jobs:
 | `enable_managed_login_branding` | Enable managed login branding for custom UI | ❌ No | `false` |
 | `login_position` | Login form horizontal position: START, CENTER, or END | ❌ No | `CENTER` |
 | `action` | Desired outcome: `apply`, `plan`, or `destroy` | ❌ No | `apply` |
+| `enable_google_identity_provider` | Enable Google identity provider for Cognito User Pool | ❌ No | `false` |
+| `google_client_id` | Google OAuth 2.0 client ID (required when enable_google_identity_provider is true) | ❌ No | `""` |
+| `google_client_secret` | Google OAuth 2.0 client secret (required when enable_google_identity_provider is true) | ❌ No | `""` |
+
+## Google Identity Provider Integration
+
+This action supports integrating Google as an identity provider, allowing users to sign in with their Google accounts. When enabled, users can authenticate using both Cognito credentials and Google accounts.
+
+### Setup Google OAuth 2.0
+
+Before enabling Google identity provider, you need to set up OAuth 2.0 credentials in Google Cloud Console:
+
+1. **Go to Google Cloud Console**: Visit [Google Cloud Console](https://console.cloud.google.com/)
+2. **Create/Select Project**: Create a new project or select an existing one
+3. **Enable Google+ API**: Navigate to "APIs & Services" > "Library" and enable the Google+ API
+4. **Create OAuth 2.0 Credentials**:
+   - Go to "APIs & Services" > "Credentials"
+   - Click "Create Credentials" > "OAuth 2.0 Client IDs"
+   - Set application type to "Web application"
+   - Add authorized redirect URIs using your Cognito domain:
+     ```
+     https://YOUR-COGNITO-DOMAIN.auth.REGION.amazoncognito.com/oauth2/idpresponse
+     ```
+
+### Usage Example
+
+```yaml
+- uses: alonch/actions-aws-auth@main
+  with:
+    name: my-app-auth
+    callback_urls: "https://myapp.com/auth/callback"
+    logout_urls: "https://myapp.com"
+    enable_google_identity_provider: true
+    google_client_id: ${{ secrets.GOOGLE_CLIENT_ID }}
+    google_client_secret: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+```
+
+### Configuration Details
+
+When Google identity provider is enabled:
+
+- **Supported Identity Providers**: The user pool client supports both "COGNITO" and "Google"
+- **OAuth Scopes**: Google integration includes `email`, `openid`, and `profile` scopes
+- **Attribute Mapping**: Automatically maps Google user attributes:
+  - `email` → Cognito email
+  - `sub` → Cognito username  
+  - `given_name` → Cognito given_name
+  - `family_name` → Cognito family_name
+  - `picture` → Cognito picture
+
+### Security Considerations
+
+- Store Google OAuth credentials as GitHub secrets for security
+- The `google_client_id` and `google_client_secret` are marked as sensitive
+- Ensure your Google OAuth redirect URIs match your Cognito domain exactly
+- Both credentials are required when `enable_google_identity_provider` is set to `true`
+
+### Authentication Flow with Google
+
+1. **User initiates login**: User visits your Cognito hosted UI
+2. **Provider selection**: User can choose between Cognito credentials or "Sign in with Google"
+3. **Google authentication**: If Google is selected, user is redirected to Google's OAuth flow
+4. **Authorization**: User authorizes your application in Google
+5. **Token exchange**: Google redirects back to Cognito with authorization code
+6. **User creation/login**: Cognito creates/updates user account and issues JWT tokens
+7. **App callback**: User is redirected to your application with Cognito tokens
 
 > **Note**: When `enable_managed_login_branding` is true, the action will automatically process image files from your repository in these directories:
 > - `assets/background/` → PAGE_BACKGROUND (PNG, JPG, JPEG, SVG files)
@@ -129,6 +195,9 @@ jobs:
 | `managed_login_version` | Managed login version used by the domain |
 | `managed_login_branding_id` | ID of the managed login branding resource |
 | `hosted_ui_url` | Complete hosted UI URL for sign-in |
+| `google_identity_provider_enabled` | Whether Google identity provider is enabled |
+| `google_identity_provider_name` | Name of the Google identity provider (if enabled) |
+| `supported_identity_providers` | List of supported identity providers |
 
 ## What Gets Created
 
@@ -137,6 +206,7 @@ This action provisions the following AWS resources:
 - **Cognito User Pool** with email verification and strong password policy
 - **User Pool Client** with OAuth 2.0 configuration
 - **User Pool Domain** using Cognito's provided domain (e.g., `your-app-12345.auth.us-east-1.amazoncognito.com`)
+- **Google Identity Provider** (optional) for Google OAuth 2.0 integration
 
 ### Default Configuration
 
@@ -312,7 +382,53 @@ your-repo/assets/
     └── my-company.png
 ```
 
-### 3. Advanced Manual Branding (Legacy)
+### 3. Authentication with Google Identity Provider
+
+Enable Google authentication alongside Cognito credentials:
+
+```yaml
+name: Deploy Google Auth
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: us-east-1
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: github-actions
+      
+      - uses: alonch/actions-aws-backend-setup@main
+        with:
+          instance: my-app
+      
+      - uses: alonch/actions-aws-auth@main
+        with:
+          name: google-auth
+          callback_urls: "https://myapp.com/auth/callback"
+          logout_urls: "https://myapp.com"
+          enable_google_identity_provider: true
+          google_client_id: ${{ secrets.GOOGLE_CLIENT_ID }}
+          google_client_secret: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+```
+
+**Prerequisites for Google Authentication:**
+1. Set up OAuth 2.0 credentials in Google Cloud Console
+2. Add your Cognito domain to Google OAuth authorized redirect URIs
+3. Store Google credentials as GitHub repository secrets
+4. Enable Google+ API in Google Cloud Console
+
+### 4. Advanced Manual Branding (Legacy)
 
 ### 4. Simplified File-Based Branding (Recommended)
 
