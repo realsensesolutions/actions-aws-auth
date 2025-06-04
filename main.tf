@@ -147,9 +147,6 @@ resource "aws_cognito_user_pool_client" "this" {
     id_token      = "minutes"
     refresh_token = "days"
   }
-
-  # Ensure Google identity provider is created first if enabled
-  depends_on = var.enable_google_identity_provider ? [aws_cognito_identity_provider.google[0]] : []
 }
 
 # Create Google Identity Provider (only if enabled)
