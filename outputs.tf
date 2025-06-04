@@ -80,6 +80,6 @@ output "google_identity_provider_name" {
 }
 
 output "supported_identity_providers" {
-  description = "List of supported identity providers"
-  value       = aws_cognito_user_pool_client.this.supported_identity_providers
+  description = "List of supported identity providers (comma-separated)"
+  value       = join(",", aws_cognito_user_pool_client.this.supported_identity_providers)
 }
