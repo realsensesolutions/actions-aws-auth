@@ -176,6 +176,10 @@ resource "aws_cognito_user_pool_client" "this" {
     id_token      = "minutes"
     refresh_token = "days"
   }
+
+    lifecycle {
+    prevent_destroy = true
+  }
 }
 
 
