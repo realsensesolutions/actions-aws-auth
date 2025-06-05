@@ -62,14 +62,3 @@ variable "google_client_secret" {
   default     = ""
   sensitive   = true
 }
-
-variable "client_id" {
-  description = "Cognito User Pool Client ID - set this explicitly to prevent accidental changes"
-  type        = string
-  default     = ""
-  
-  validation {
-    condition     = length(var.client_id) > 0
-    error_message = "Client ID cannot be empty. Set this to the actual client ID value to lock it."
-  }
-}
