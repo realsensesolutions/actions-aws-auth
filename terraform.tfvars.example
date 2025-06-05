@@ -1,0 +1,21 @@
+# Required variables
+name = "my-cognito-pool"
+
+# OAuth configuration
+callback_urls = "https://myapp.com/callback,https://myapp.com/auth/callback"
+logout_urls   = "https://myapp.com,https://myapp.com/logout"
+
+# ✅ Lock Client ID to prevent accidental changes
+# Get this value from: terraform output user_pool_client_id
+# Only change this when you explicitly want to use a different client
+client_id = "your-actual-client-id-here"
+
+# Managed Login Branding (optional)
+enable_managed_login_branding = true
+login_position               = "CENTER"
+assets_base_path            = ""
+
+# Google Identity Provider (optional)
+enable_google_identity_provider = true
+google_client_id               = "your-google-client-id"
+google_client_secret           = "your-google-client-secret" 

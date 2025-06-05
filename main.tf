@@ -176,10 +176,6 @@ resource "aws_cognito_user_pool_client" "this" {
     id_token      = "minutes"
     refresh_token = "days"
   }
-
-    lifecycle {
-    prevent_destroy = true
-  }
 }
 
 
@@ -197,7 +193,7 @@ resource "awscc_cognito_managed_login_branding" "this" {
   count = var.enable_managed_login_branding ? 1 : 0
 
   user_pool_id = aws_cognito_user_pool.this.id
-  client_id    = aws_cognito_user_pool_client.this.id
+  client_id    = var.client_id
   
   # Apply branding settings with custom form location
   settings = local.branding_settings_json != null ? local.branding_settings_json : "{}"
