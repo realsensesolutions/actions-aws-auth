@@ -83,3 +83,8 @@ output "supported_identity_providers" {
   description = "List of supported identity providers (comma-separated)"
   value       = join(",", aws_cognito_user_pool_client.this.supported_identity_providers)
 }
+
+output "branding_trigger_hash" {
+  description = "Hash of the current branding trigger state (helps track when branding should be recreated)"
+  value       = var.enable_managed_login_branding ? terraform_data.branding_trigger[0].input : null
+}
