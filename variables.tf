@@ -62,9 +62,3 @@ variable "google_client_secret" {
   default     = ""
   sensitive   = true
 }
-
-variable "force_branding_recreation_trigger" {
-  description = "Optional trigger value to force recreation of managed login branding (e.g., git commit hash, timestamp, etc.)"
-  type        = string
-  default     = ""
-}

@@ -6,36 +6,6 @@ resource "random_id" "suffix" {
   byte_length = 4
 }
 
-# Create a trigger for branding recreation when assets or config change
-resource "terraform_data" "branding_trigger" {
-  count = var.enable_managed_login_branding ? 1 : 0
-  
-  input = {
-    # Trigger when assets change (based on file content hash)
-    assets_hash = length(local.branding_assets) > 0 ? md5(jsonencode([
-      for asset in local.branding_assets : {
-        file_path = asset.file_path
-        content_hash = md5(asset.bytes)
-      }
-    ])) : ""
-    
-    # Trigger when branding settings change
-    settings_hash = local.branding_settings_json != null ? md5(local.branding_settings_json) : ""
-    
-    # Trigger when login position changes
-    login_position = var.login_position
-    
-    # Trigger when callback/logout URLs change (affects branding context)
-    urls_hash = md5(jsonencode({
-      callback_urls = local.callback_urls
-      logout_urls   = local.logout_urls
-    }))
-    
-    # Optional manual trigger (e.g., git commit hash, timestamp)
-    manual_trigger = var.force_branding_recreation_trigger
-  }
-}
-
 # Validate Google provider configuration
 locals {
   validate_google_config = var.enable_google_identity_provider && (var.google_client_id == "" || var.google_client_secret == "") ? tobool("Google identity provider is enabled but client_id or client_secret is missing") : true
@@ -233,11 +203,6 @@ resource "awscc_cognito_managed_login_branding" "this" {
 
   # Ensure domain is created first to enable managed login
   depends_on = [aws_cognito_user_pool_domain.this]
-  
-  # Force recreation when branding trigger changes
-  lifecycle {
-    replace_triggered_by = [terraform_data.branding_trigger[0]]
-  }
 }
 
 # Note: Managed Login Branding is only available in CloudFormation, not Terraform

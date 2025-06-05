@@ -41,10 +41,6 @@ inputs:
     description: 'Google OAuth 2.0 client secret (required when enable_google_identity_provider is true)'
     required: false
     default: ''
-  force_branding_recreation_trigger:
-    description: 'Optional trigger value to force recreation of managed login branding (e.g., git commit hash, timestamp, etc.)'
-    required: false
-    default: ''
 
 outputs:
   user_pool_id:
@@ -113,7 +109,6 @@ runs:
         TF_VAR_google_client_id: ${{ inputs.google_client_id }}
         TF_VAR_google_client_secret: ${{ inputs.google_client_secret }}
         TF_VAR_assets_base_path: "${{ github.workspace }}"
-        TF_VAR_force_branding_recreation_trigger: ${{ inputs.force_branding_recreation_trigger }}
 
     - name: Terraform plan
       if: inputs.action == 'plan'
@@ -130,7 +125,6 @@ runs:
         TF_VAR_google_client_id: ${{ inputs.google_client_id }}
         TF_VAR_google_client_secret: ${{ inputs.google_client_secret }}
         TF_VAR_assets_base_path: "${{ github.workspace }}"
-        TF_VAR_force_branding_recreation_trigger: ${{ inputs.force_branding_recreation_trigger }}
 
     - name: Terraform init and destroy
       if: inputs.action == 'destroy'
@@ -156,7 +150,6 @@ runs:
         TF_VAR_google_client_id: ${{ inputs.google_client_id }}
         TF_VAR_google_client_secret: ${{ inputs.google_client_secret }}
         TF_VAR_assets_base_path: "${{ github.workspace }}"
-        TF_VAR_force_branding_recreation_trigger: ${{ inputs.force_branding_recreation_trigger }}
 
     - name: Terraform apply
       id: terraform
@@ -205,7 +198,6 @@ runs:
         TF_VAR_google_client_id: ${{ inputs.google_client_id }}
         TF_VAR_google_client_secret: ${{ inputs.google_client_secret }}
         TF_VAR_assets_base_path: "${{ github.workspace }}"
-        TF_VAR_force_branding_recreation_trigger: ${{ inputs.force_branding_recreation_trigger }}
 
     - name: Set final outputs
       id: outputs
