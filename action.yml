@@ -163,15 +163,6 @@ runs:
       id: terraform
       if: inputs.action == 'apply'
       run: |
-        # Force recreation of managed login branding if enabled and resource exists
-        if [ "${{ inputs.force_recreate_branding }}" == "true" ] && [ "${{ inputs.enable_managed_login_branding }}" == "true" ]; then
-          if terraform state list | grep -q "awscc_cognito_managed_login_branding.this"; then
-            echo "Tainting managed login branding resource to force recreation..."
-            terraform taint 'awscc_cognito_managed_login_branding.this[0]' || true
-          else
-            echo "Managed login branding resource not found in state, will be created fresh"
-          fi
-        fi
         
         terraform apply -auto-approve
         USER_POOL_ID=$(terraform output -raw user_pool_id | tr -d '\r\n')
