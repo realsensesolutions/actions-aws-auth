@@ -38,19 +38,19 @@ variable "login_position" {
 }
 
 variable "background_asset_path" {
-  description = "Path to background image asset (supported: png, jpg, jpeg, svg)"
+  description = "Path to background image asset relative to workspace root (supported: png, jpg, jpeg, svg)"
   type        = string
   default     = ""
 }
 
 variable "logo_asset_path" {
-  description = "Path to logo image asset (supported: png, jpg, jpeg, svg)"
+  description = "Path to logo image asset relative to workspace root (supported: png, jpg, jpeg, svg)"
   type        = string
   default     = ""
 }
 
 variable "favicon_asset_path" {
-  description = "Path to favicon asset (supported: ico, png)"
+  description = "Path to favicon asset relative to workspace root (supported: ico, png)"
   type        = string
   default     = ""
 }
