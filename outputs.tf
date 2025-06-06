@@ -29,20 +29,6 @@ output "login_url" {
   value       = "https://${aws_cognito_user_pool_domain.this.domain}.auth.${data.aws_region.current.name}.amazoncognito.com/login?client_id=${aws_cognito_user_pool_client.this.id}&response_type=code&scope=email+openid+profile&redirect_uri=${split(",", var.callback_urls)[0]}"
 }
 
-output "discovered_branding_assets" {
-  description = "Information about automatically discovered branding assets"
-  value = var.enable_managed_login_branding ? {
-    asset_count = length(local.branding_assets)
-    assets = [
-      for asset in local.branding_assets : {
-        category  = asset.category
-        extension = asset.extension
-        file_path = asset.file_path
-        size_kb   = length(asset.bytes) / 1024
-      }
-    ]
-  } : null
-}
 
 output "cognito_domain" {
   description = "Cognito provided domain URL"
