@@ -44,40 +44,37 @@ locals {
     }
   )) : null
   
-  # Define asset directory mappings
-  asset_directories = {
-    "background" = "PAGE_BACKGROUND"
-    "favicon"    = "FAVICON_ICO"
-    "logo"       = "FORM_LOGO"
-  }
-  
-  # Supported image extensions by directory
+  # Supported image extensions by asset type
   supported_extensions = {
     "background" = ["png", "jpg", "jpeg", "svg"]
     "favicon"    = ["ico", "png"]
     "logo"       = ["png", "jpg", "jpeg", "svg"]
   }
   
-  # Base path for assets - use workspace root
-  assets_base_path = var.assets_base_path != "" ? var.assets_base_path : path.cwd
+  # Helper function to get file extension
+  get_extension = { for path in [var.background_asset_path, var.logo_asset_path, var.favicon_asset_path] : path => lower(regex("\\.([^.]+)$", path)[0]) if path != "" }
   
-  # Scan for image files in each asset directory
-  discovered_assets = flatten([
-    for dir_name, category in local.asset_directories : [
-      for ext in local.supported_extensions[dir_name] : [
-        for file_path in try(fileset("${local.assets_base_path}/assets/${dir_name}", "*.${ext}"), []) : {
-          category   = category
-          extension  = upper(ext == "jpg" ? "jpeg" : ext)
-          bytes      = filebase64("${local.assets_base_path}/assets/${dir_name}/${file_path}")
-          color_mode = "LIGHT"
-          file_path  = "${dir_name}/${file_path}"
-        }
-      ]
-    ]
-  ])
-  
-  # Convert to the format expected by the managed login branding resource
-  branding_assets = var.enable_managed_login_branding ? local.discovered_assets : []
+  # Create branding assets from direct asset paths
+  branding_assets = var.enable_managed_login_branding ? compact([
+    var.background_asset_path != "" ? {
+      category   = "PAGE_BACKGROUND"
+      extension  = upper(local.get_extension[var.background_asset_path] == "jpg" ? "jpeg" : local.get_extension[var.background_asset_path])
+      bytes      = filebase64(var.background_asset_path)
+      color_mode = "LIGHT"
+    } : null,
+    var.logo_asset_path != "" ? {
+      category   = "FORM_LOGO"
+      extension  = upper(local.get_extension[var.logo_asset_path] == "jpg" ? "jpeg" : local.get_extension[var.logo_asset_path])
+      bytes      = filebase64(var.logo_asset_path)
+      color_mode = "LIGHT"
+    } : null,
+    var.favicon_asset_path != "" ? {
+      category   = "FAVICON_ICO"
+      extension  = upper(local.get_extension[var.favicon_asset_path] == "jpg" ? "jpeg" : local.get_extension[var.favicon_asset_path])
+      bytes      = filebase64(var.favicon_asset_path)
+      color_mode = "LIGHT"
+    } : null
+  ]) : []
 }
 
 # Create Cognito User Pool
@@ -194,7 +191,9 @@ resource "terraform_data" "branding_assets_trigger" {
   
   # Trigger replacement when assets change
   input = {
-    assets_hash = sha256(jsonencode(local.branding_assets))
+    background_asset_path = var.background_asset_path
+    logo_asset_path = var.logo_asset_path
+    favicon_asset_path = var.favicon_asset_path
     settings_hash = sha256(local.branding_settings_json != null ? local.branding_settings_json : "{}")
   }
 }
@@ -209,7 +208,7 @@ resource "awscc_cognito_managed_login_branding" "this" {
   # Apply branding settings with custom form location
   settings = local.branding_settings_json != null ? local.branding_settings_json : "{}"
   
-  # Add automatically discovered branding assets
+  # Add branding assets from provided asset paths
   assets = local.branding_assets
 
   # Ensure domain is created first to enable managed login

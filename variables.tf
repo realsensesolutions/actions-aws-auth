@@ -37,8 +37,20 @@ variable "login_position" {
   }
 }
 
-variable "assets_base_path" {
-  description = "Base path where to look for assets/ directory. Defaults to current working directory"
+variable "background_asset_path" {
+  description = "Path to background image asset (supported: png, jpg, jpeg, svg)"
+  type        = string
+  default     = ""
+}
+
+variable "logo_asset_path" {
+  description = "Path to logo image asset (supported: png, jpg, jpeg, svg)"
+  type        = string
+  default     = ""
+}
+
+variable "favicon_asset_path" {
+  description = "Path to favicon asset (supported: ico, png)"
   type        = string
   default     = ""
 }

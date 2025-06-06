@@ -1,5 +1,5 @@
 name: 'AWS Cognito Auth'
-description: 'Provision AWS Cognito User Pool for authentication using Terraform with automatic branding asset discovery'
+description: 'Provision AWS Cognito User Pool for authentication using Terraform with customizable branding assets'
 author: 'alonch'
 branding:
   icon: 'shield'
@@ -22,7 +22,7 @@ inputs:
     required: false
     default: 'https://example.com'
   enable_managed_login_branding:
-    description: 'Enable managed login branding with automatic asset discovery from assets/ directory (background/, favicon/, logo/)'
+    description: 'Enable managed login branding with customizable assets (use background_asset_path, logo_asset_path, favicon_asset_path)'
     required: false
     default: 'false'
   login_position:
@@ -41,14 +41,18 @@ inputs:
     description: 'Google OAuth 2.0 client secret (required when enable_google_identity_provider is true)'
     required: false
     default: ''
-  assets_base_path:
-    description: 'Base path for discovering branding assets (defaults to workspace root)'
+  background_asset_path:
+    description: 'Path to background image asset (supported: png, jpg, jpeg, svg)'
     required: false
     default: ''
-  force_recreate_branding:
-    description: 'Force recreation of managed login branding on every run (useful for ensuring fresh branding with new client IDs)'
+  logo_asset_path:
+    description: 'Path to logo image asset (supported: png, jpg, jpeg, svg)'
     required: false
-    default: 'true'
+    default: ''
+  favicon_asset_path:
+    description: 'Path to favicon asset (supported: ico, png)'
+    required: false
+    default: ''
 
 outputs:
   user_pool_id:
@@ -116,7 +120,9 @@ runs:
         TF_VAR_enable_google_identity_provider: ${{ inputs.enable_google_identity_provider }}
         TF_VAR_google_client_id: ${{ inputs.google_client_id }}
         TF_VAR_google_client_secret: ${{ inputs.google_client_secret }}
-        TF_VAR_assets_base_path: "${{ github.workspace }}"
+        TF_VAR_background_asset_path: ${{ inputs.background_asset_path }}
+        TF_VAR_logo_asset_path: ${{ inputs.logo_asset_path }}
+        TF_VAR_favicon_asset_path: ${{ inputs.favicon_asset_path }}
 
     - name: Terraform plan
       if: inputs.action == 'plan'
@@ -132,7 +138,9 @@ runs:
         TF_VAR_enable_google_identity_provider: ${{ inputs.enable_google_identity_provider }}
         TF_VAR_google_client_id: ${{ inputs.google_client_id }}
         TF_VAR_google_client_secret: ${{ inputs.google_client_secret }}
-        TF_VAR_assets_base_path: "${{ github.workspace }}"
+        TF_VAR_background_asset_path: ${{ inputs.background_asset_path }}
+        TF_VAR_logo_asset_path: ${{ inputs.logo_asset_path }}
+        TF_VAR_favicon_asset_path: ${{ inputs.favicon_asset_path }}
 
     - name: Terraform init and destroy
       if: inputs.action == 'destroy'
@@ -157,12 +165,23 @@ runs:
         TF_VAR_enable_google_identity_provider: ${{ inputs.enable_google_identity_provider }}
         TF_VAR_google_client_id: ${{ inputs.google_client_id }}
         TF_VAR_google_client_secret: ${{ inputs.google_client_secret }}
-        TF_VAR_assets_base_path: "${{ github.workspace }}"
+        TF_VAR_background_asset_path: ${{ inputs.background_asset_path }}
+        TF_VAR_logo_asset_path: ${{ inputs.logo_asset_path }}
+        TF_VAR_favicon_asset_path: ${{ inputs.favicon_asset_path }}
 
     - name: Terraform apply
       id: terraform
       if: inputs.action == 'apply'
       run: |
+        # Force recreation of managed login branding if enabled and resource exists
+        if [ "${{ inputs.enable_managed_login_branding }}" == "true" ]; then
+          if terraform state list | grep -q "awscc_cognito_managed_login_branding.this"; then
+            echo "Tainting managed login branding resource to force recreation..."
+            terraform taint 'awscc_cognito_managed_login_branding.this[0]' || true
+          else
+            echo "Managed login branding resource not found in state, will be created fresh"
+          fi
+        fi
         
         terraform apply -auto-approve
         USER_POOL_ID=$(terraform output -raw user_pool_id | tr -d '\r\n')
@@ -206,7 +225,9 @@ runs:
         TF_VAR_enable_google_identity_provider: ${{ inputs.enable_google_identity_provider }}
         TF_VAR_google_client_id: ${{ inputs.google_client_id }}
         TF_VAR_google_client_secret: ${{ inputs.google_client_secret }}
-        TF_VAR_assets_base_path: "${{ github.workspace }}"
+        TF_VAR_background_asset_path: ${{ inputs.background_asset_path }}
+        TF_VAR_logo_asset_path: ${{ inputs.logo_asset_path }}
+        TF_VAR_favicon_asset_path: ${{ inputs.favicon_asset_path }}
 
     - name: Set final outputs
       id: outputs
