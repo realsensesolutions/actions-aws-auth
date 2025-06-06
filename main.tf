@@ -68,26 +68,28 @@ locals {
   }
   
   # Create branding assets from direct asset paths
-  branding_assets = var.enable_managed_login_branding ? compact([
-    var.background_asset_path != "" ? {
-      category   = "PAGE_BACKGROUND"
-      extension  = local.get_file_extension.background
-      bytes      = filebase64(var.background_asset_path)
-      color_mode = "LIGHT"
-    } : null,
-    var.logo_asset_path != "" ? {
-      category   = "FORM_LOGO"
-      extension  = local.get_file_extension.logo
-      bytes      = filebase64(var.logo_asset_path)
-      color_mode = "LIGHT"
-    } : null,
-    var.favicon_asset_path != "" ? {
-      category   = "FAVICON_ICO"
-      extension  = local.get_file_extension.favicon
-      bytes      = filebase64(var.favicon_asset_path)
-      color_mode = "LIGHT"
-    } : null
-  ]) : []
+  branding_assets = var.enable_managed_login_branding ? [
+    for asset in [
+      var.background_asset_path != "" ? {
+        category   = "PAGE_BACKGROUND"
+        extension  = local.get_file_extension.background
+        bytes      = filebase64(var.background_asset_path)
+        color_mode = "LIGHT"
+      } : null,
+      var.logo_asset_path != "" ? {
+        category   = "FORM_LOGO"
+        extension  = local.get_file_extension.logo
+        bytes      = filebase64(var.logo_asset_path)
+        color_mode = "LIGHT"
+      } : null,
+      var.favicon_asset_path != "" ? {
+        category   = "FAVICON_ICO"
+        extension  = local.get_file_extension.favicon
+        bytes      = filebase64(var.favicon_asset_path)
+        color_mode = "LIGHT"
+      } : null
+    ] : asset if asset != null
+  ] : []
 }
 
 # Create Cognito User Pool
