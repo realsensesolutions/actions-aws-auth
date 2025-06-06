@@ -203,7 +203,6 @@ resource "awscc_cognito_managed_login_branding" "this" {
 
   # Ensure domain is created first to enable managed login
   depends_on = [aws_cognito_user_pool_domain.this]
-}
 
-# Note: Managed Login Branding is only available in CloudFormation, not Terraform
-# For now, we'll use the default Cognito UI styling
+  replace_triggered_by = [local.branding_assets]
+}
