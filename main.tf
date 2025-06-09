@@ -117,31 +117,55 @@ resource "aws_cognito_user_pool" "this" {
 
   # Custom attributes schema configuration
   schema {
-    name                = "tenantId"
-    attribute_data_type = "String"
-    mutable             = true
-    required            = false
+    name                     = "tenantId"
+    attribute_data_type      = "String"
+    mutable                  = true
+    required                 = false
+    developer_only_attribute = false
+    
+    string_attribute_constraints {
+      min_length = 0
+      max_length = 2048
+    }
   }
 
   schema {
-    name                = "userRole"
-    attribute_data_type = "String"
-    mutable             = true
-    required            = false
+    name                     = "userRole"
+    attribute_data_type      = "String"
+    mutable                  = true
+    required                 = false
+    developer_only_attribute = false
+    
+    string_attribute_constraints {
+      min_length = 0
+      max_length = 2048
+    }
   }
 
   schema {
-    name                = "apiKey"
-    attribute_data_type = "String"
-    mutable             = true
-    required            = false
+    name                     = "apiKey"
+    attribute_data_type      = "String"
+    mutable                  = true
+    required                 = false
+    developer_only_attribute = false
+    
+    string_attribute_constraints {
+      min_length = 0
+      max_length = 2048
+    }
   }
 
   schema {
-    name                = "tenantTier"
-    attribute_data_type = "String"
-    mutable             = true
-    required            = false
+    name                     = "tenantTier"
+    attribute_data_type      = "String"
+    mutable                  = true
+    required                 = false
+    developer_only_attribute = false
+    
+    string_attribute_constraints {
+      min_length = 0
+      max_length = 2048
+    }
   }
 
   # Password policy
