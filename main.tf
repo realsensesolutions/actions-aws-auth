@@ -242,22 +242,6 @@ resource "aws_cognito_user_pool_client" "this" {
     refresh_token = "days"
   }
 
-  # Attribute permissions
-  read_attributes = [
-    "email",
-    "custom:tenantId",
-    "custom:userRole", 
-    "custom:apiKey",
-    "custom:tenantTier"
-  ]
-
-  write_attributes = [
-    "email",
-    "custom:tenantId",
-    "custom:userRole",
-    "custom:apiKey", 
-    "custom:tenantTier"
-  ]
 }
 
 
