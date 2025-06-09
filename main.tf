@@ -115,6 +115,35 @@ resource "aws_cognito_user_pool" "this" {
     required            = true
   }
 
+  # Custom attributes schema configuration
+  schema {
+    name                = "tenantId"
+    attribute_data_type = "String"
+    mutable             = true
+    required            = false
+  }
+
+  schema {
+    name                = "userRole"
+    attribute_data_type = "String"
+    mutable             = true
+    required            = false
+  }
+
+  schema {
+    name                = "apiKey"
+    attribute_data_type = "String"
+    mutable             = true
+    required            = false
+  }
+
+  schema {
+    name                = "tenantTier"
+    attribute_data_type = "String"
+    mutable             = true
+    required            = false
+  }
+
   # Password policy
   password_policy {
     minimum_length    = 8
@@ -188,6 +217,23 @@ resource "aws_cognito_user_pool_client" "this" {
     id_token      = "minutes"
     refresh_token = "days"
   }
+
+  # Attribute permissions
+  read_attributes = [
+    "email",
+    "custom:tenantId",
+    "custom:userRole", 
+    "custom:apiKey",
+    "custom:tenantTier"
+  ]
+
+  write_attributes = [
+    "email",
+    "custom:tenantId",
+    "custom:userRole",
+    "custom:apiKey", 
+    "custom:tenantTier"
+  ]
 }
 
 
