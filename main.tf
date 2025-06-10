@@ -208,6 +208,7 @@ resource "aws_cognito_identity_provider" "google" {
     given_name = "given_name"
     family_name = "family_name"
     picture    = "picture"
+    name = "name"
   }
 }
 
