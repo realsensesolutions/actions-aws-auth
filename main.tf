@@ -19,7 +19,7 @@ locals {
   logout_urls   = split(",", var.logout_urls)
   
   # Generate branding settings using templatefile for clean configuration
-  branding_settings_json = var.enable_managed_login_branding ? templatefile("${path.module}/config/branding-settings.json.tpl", {
+  branding_settings_json = var.enable_managed_login_branding ? templatefile("${path.module}/config/branding-settings.json.tftpl", {
     horizontal_position = var.login_position
   }) : null
   
