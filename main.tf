@@ -18,31 +18,10 @@ locals {
   callback_urls = split(",", var.callback_urls)
   logout_urls   = split(",", var.logout_urls)
   
-  # Create branding settings using the example as base and modify form location
-  base_branding_settings = jsondecode(file("${path.module}/config/branding-settings-example.json"))
-  
-  # Modify the form location based on login_position if managed login branding is enabled
-  branding_settings_json = var.enable_managed_login_branding ? jsonencode(merge(
-    local.base_branding_settings,
-    {
-      categories = merge(
-        local.base_branding_settings.categories,
-        {
-          form = merge(
-            local.base_branding_settings.categories.form,
-            {
-              location = merge(
-                local.base_branding_settings.categories.form.location,
-                {
-                  horizontal = var.login_position
-                }
-              )
-            }
-          )
-        }
-      )
-    }
-  )) : null
+  # Generate branding settings using templatefile for clean configuration
+  branding_settings_json = var.enable_managed_login_branding ? templatefile("${path.module}/config/branding-settings.json.tpl", {
+    horizontal_position = var.login_position
+  }) : null
   
   # Supported image extensions by asset type
   supported_extensions = {
