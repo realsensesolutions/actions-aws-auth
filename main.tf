@@ -229,22 +229,6 @@ resource "aws_cognito_user_pool_client" "this" {
 resource "aws_cognito_user_pool_domain" "this" {
   domain       = "${lower(local.user_pool_name)}-${random_id.suffix.hex}"
   user_pool_id = aws_cognito_user_pool.this.id
-  
-  # Enable managed login version if branding is enabled
-  managed_login_version = var.enable_managed_login_branding ? 2 : null
-}
-
-# Track assets changes for managed login branding replacement
-resource "terraform_data" "branding_assets_trigger" {
-  count = var.enable_managed_login_branding ? 1 : 0
-  
-  # Trigger replacement when assets change
-  input = {
-    background_asset_path = var.background_asset_path
-    logo_asset_path = var.logo_asset_path
-    favicon_asset_path = var.favicon_asset_path
-    settings_hash = sha256(local.branding_settings_json != null ? local.branding_settings_json : "{}")
-  }
 }
 
 # Create Managed Login Branding (only if enabled)
@@ -262,9 +246,4 @@ resource "awscc_cognito_managed_login_branding" "this" {
 
   # Ensure domain is created first to enable managed login
   depends_on = [aws_cognito_user_pool_domain.this]
-  
-  # Force replacement when assets or settings change
-  lifecycle {
-    replace_triggered_by = [terraform_data.branding_assets_trigger[0]]
-  }
 }

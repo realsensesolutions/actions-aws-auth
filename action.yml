@@ -169,17 +169,67 @@ runs:
         TF_VAR_logo_asset_path: "${{ github.workspace }}/${{ inputs.logo_asset_path }}"
         TF_VAR_favicon_asset_path: "${{ github.workspace }}/${{ inputs.favicon_asset_path }}"
 
+    - name: Check if branding asset files changed
+      id: check_assets
+      if: inputs.action == 'apply' && inputs.enable_managed_login_branding == 'true'
+      uses: actions/github-script@v7
+      env:
+        BACKGROUND_ASSET_PATH: ${{ inputs.background_asset_path }}
+        LOGO_ASSET_PATH: ${{ inputs.logo_asset_path }}
+        FAVICON_ASSET_PATH: ${{ inputs.favicon_asset_path }}
+      with:
+        script: |
+          const assetPaths = [
+            process.env.BACKGROUND_ASSET_PATH,
+            process.env.LOGO_ASSET_PATH,
+            process.env.FAVICON_ASSET_PATH
+          ].filter(path => path && path.trim() !== '');
+          
+          if (assetPaths.length === 0) {
+            console.log('No asset paths provided, skipping change detection');
+            core.setOutput('assets_changed', 'false');
+            return;
+          }
+          
+          console.log('Checking for changes in asset files:', assetPaths);
+          
+          try {
+            const { data: comparison } = await github.rest.repos.compareCommits({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              base: context.payload.before,
+              head: context.payload.after
+            });
+            
+            const changedFiles = comparison.files?.map(file => file.filename) || [];
+            console.log('Changed files in this push:', changedFiles);
+            
+            const assetsChanged = assetPaths.some(assetPath => 
+              changedFiles.includes(assetPath)
+            );
+            
+            console.log('Assets changed:', assetsChanged);
+            core.setOutput('assets_changed', assetsChanged.toString());
+          } catch (error) {
+            console.log('Error checking file changes, defaulting to true:', error.message);
+            core.setOutput('assets_changed', 'true');
+          }
+
     - name: Terraform apply
       id: terraform
       if: inputs.action == 'apply'
       run: |
-        # Force recreation of managed login branding if enabled and resource exists
+        # Force recreation of managed login branding only if assets have changed
         if [ "${{ inputs.enable_managed_login_branding }}" == "true" ]; then
-          if terraform state list | grep -q "awscc_cognito_managed_login_branding.this"; then
-            echo "Tainting managed login branding resource to force recreation..."
-            terraform taint 'awscc_cognito_managed_login_branding.this[0]' || true
+          if [ "${{ steps.check_assets.outputs.assets_changed }}" == "true" ]; then
+            if terraform state list | grep -q "awscc_cognito_managed_login_branding.this"; then
+              echo "Asset files have changed. Tainting managed login branding resource to force recreation..."
+              terraform taint 'awscc_cognito_managed_login_branding.this[0]' || true
+            else
+              echo "Managed login branding resource not found in state, will be created fresh"
+            fi
           else
-            echo "Managed login branding resource not found in state, will be created fresh"
+            echo "No asset files have changed. Skipping taint of managed login branding resource."
           fi
         fi
         
