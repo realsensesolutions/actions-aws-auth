@@ -246,7 +246,11 @@ runs:
         MANAGED_LOGIN_BRANDING_ID=$(terraform output -raw managed_login_branding_id | tr -d '\r\n')
         HOSTED_UI_URL=$(terraform output -raw hosted_ui_url | tr -d '\r\n')
         GOOGLE_IDENTITY_PROVIDER_ENABLED=$(terraform output -raw google_identity_provider_enabled | tr -d '\r\n')
-        GOOGLE_IDENTITY_PROVIDER_NAME=$(terraform output -raw google_identity_provider_name | tr -d '\r\n')
+        if [ "${{ inputs.enable_google_identity_provider }}" == "true" ]; then
+          GOOGLE_IDENTITY_PROVIDER_NAME=$(terraform output -raw google_identity_provider_name | tr -d '\r\n')
+        else
+          GOOGLE_IDENTITY_PROVIDER_NAME=""
+        fi
         SUPPORTED_IDENTITY_PROVIDERS=$(terraform output -raw supported_identity_providers | tr -d '\r\n')
 
         # Set outputs temporarily
@@ -296,7 +300,11 @@ runs:
         MANAGED_LOGIN_BRANDING_ID=$(terraform output -raw managed_login_branding_id | tr -d '\r\n')
         HOSTED_UI_URL=$(terraform output -raw hosted_ui_url | tr -d '\r\n')
         GOOGLE_IDENTITY_PROVIDER_ENABLED=$(terraform output -raw google_identity_provider_enabled | tr -d '\r\n')
-        GOOGLE_IDENTITY_PROVIDER_NAME=$(terraform output -raw google_identity_provider_name | tr -d '\r\n')
+        if [ "${{ inputs.enable_google_identity_provider }}" == "true" ]; then
+          GOOGLE_IDENTITY_PROVIDER_NAME=$(terraform output -raw google_identity_provider_name | tr -d '\r\n')
+        else
+          GOOGLE_IDENTITY_PROVIDER_NAME=""
+        fi
         SUPPORTED_IDENTITY_PROVIDERS=$(terraform output -raw supported_identity_providers | tr -d '\r\n')
 
         # Set outputs
