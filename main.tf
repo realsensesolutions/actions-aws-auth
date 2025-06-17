@@ -227,9 +227,8 @@ resource "aws_cognito_user_pool_client" "this" {
 
 # Create User Pool Domain with managed login support
 resource "aws_cognito_user_pool_domain" "this" {
-  domain                 = "${lower(local.user_pool_name)}-${random_id.suffix.hex}"
-  user_pool_id          = aws_cognito_user_pool.this.id
-  managed_login_version = var.enable_managed_login_branding ? 1 : null
+  domain       = "${lower(local.user_pool_name)}-${random_id.suffix.hex}"
+  user_pool_id = aws_cognito_user_pool.this.id
 }
 
 # Create Managed Login Branding (only if enabled)
