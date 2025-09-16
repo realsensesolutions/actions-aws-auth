@@ -27,7 +27,7 @@ jobs:
           name: auth
           callback_urls: "https://example.com/callback"
           logout_urls: "https://example.com"
-          enable_managed_login_branding: "false"
+          enable_managed_login_branding: "true"
           login_position: "CENTER"
           enable_google_identity_provider: "false"
           google_client_id: ""
