@@ -25,13 +25,13 @@ jobs:
         with: 
           action: destroy
           name: auth
-          # callback_urls: "https://example.com/callback"
-          # logout_urls: "https://example.com"
-          # enable_managed_login_branding: "true"
-          # login_position: "CENTER"
-          # enable_google_identity_provider: "false"
-          # google_client_id: ""
-          # google_client_secret: ""
-          # background_asset_path: "assets/background.png"
-          # logo_asset_path: "assets/logo.svg"
-          # favicon_asset_path: "assets/favicon.ico"
+          callback_urls: "https://example.com/callback"
+          logout_urls: "https://example.com"
+          enable_managed_login_branding: "true"
+          login_position: "CENTER"
+          enable_google_identity_provider: "false"
+          google_client_id: ""
+          google_client_secret: ""
+          background_asset_path: "assets/background.png"
+          logo_asset_path: "assets/logo.svg"
+          favicon_asset_path: "assets/favicon.ico"
