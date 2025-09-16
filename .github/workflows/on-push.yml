@@ -21,7 +21,7 @@ jobs:
       - uses: alonch/actions-aws-backend-setup@main
         with: 
           instance: auth-demo
-      - uses: ./
+      - uses: realsensesolutions/actions-aws-auth@main
         with: 
           action: destroy
           # name: auth
