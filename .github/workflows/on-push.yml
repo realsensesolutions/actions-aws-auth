@@ -24,7 +24,7 @@ jobs:
       - uses: realsensesolutions/actions-aws-auth@main
         with: 
           action: destroy
-          # name: auth
+          name: auth
           # callback_urls: "https://example.com/callback"
           # logout_urls: "https://example.com"
           # enable_managed_login_branding: "true"
