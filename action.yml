@@ -171,6 +171,17 @@ runs:
         TF_VAR_logo_asset_path: ${{ inputs.logo_asset_path && format('{0}/{1}', github.workspace, inputs.logo_asset_path) || '' }}
         TF_VAR_favicon_asset_path: ${{ inputs.favicon_asset_path && format('{0}/{1}', github.workspace, inputs.favicon_asset_path) || '' }}
 
+    - name: Debug step - Show current configuration
+      if: inputs.action == 'apply'
+      run: |
+        echo "Debug: Current configuration:"
+        echo "  enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}"
+        echo "  enable_google_identity_provider: ${{ inputs.enable_google_identity_provider }}"
+        echo "  background_asset_path: '${{ inputs.background_asset_path }}'"
+        echo "  logo_asset_path: '${{ inputs.logo_asset_path }}'"
+        echo "  favicon_asset_path: '${{ inputs.favicon_asset_path }}'"
+      shell: bash
+
     - name: Check if branding asset files changed
       id: check_assets
       if: inputs.action == 'apply' && inputs.enable_managed_login_branding == 'true'
@@ -223,8 +234,19 @@ runs:
       run: |
         # Check if Terraform state exists and contains required resources
         if terraform state list 2>/dev/null | grep -q "aws_cognito_user_pool.this"; then
-          echo "infrastructure_exists=true" >> "$GITHUB_OUTPUT"
-          echo "Infrastructure exists, apply can be skipped if only assets might have changed"
+          # Check if managed login branding resource exists when branding is enabled
+          if [ "${{ inputs.enable_managed_login_branding }}" == "true" ]; then
+            if terraform state list 2>/dev/null | grep -q "awscc_cognito_managed_login_branding.this"; then
+              echo "infrastructure_exists=true" >> "$GITHUB_OUTPUT"
+              echo "Infrastructure exists including managed login branding, apply can be skipped if only assets might have changed"
+            else
+              echo "infrastructure_exists=false" >> "$GITHUB_OUTPUT"
+              echo "Infrastructure exists but managed login branding resource is missing, apply must run to add it"
+            fi
+          else
+            echo "infrastructure_exists=true" >> "$GITHUB_OUTPUT"
+            echo "Infrastructure exists, apply can be skipped if only assets might have changed"
+          fi
         else
           echo "infrastructure_exists=false" >> "$GITHUB_OUTPUT"
           echo "No infrastructure found, apply must run even without asset changes"
@@ -273,7 +295,13 @@ runs:
         MANAGED_LOGIN_BRANDING_ENABLED=$(terraform output -raw managed_login_branding_enabled | tr -d '\r\n')
         MANAGED_LOGIN_VERSION=$(terraform output -raw managed_login_version | tr -d '\r\n')
         if [ "${{ inputs.enable_managed_login_branding }}" == "true" ]; then
-          MANAGED_LOGIN_BRANDING_ID=$(terraform output -raw managed_login_branding_id | tr -d '\r\n')
+          # Check if managed_login_branding_id output exists before trying to retrieve it
+          if terraform output managed_login_branding_id >/dev/null 2>&1; then
+            MANAGED_LOGIN_BRANDING_ID=$(terraform output -raw managed_login_branding_id | tr -d '\r\n')
+          else
+            echo "Warning: managed_login_branding_id output not found in state, setting to empty"
+            MANAGED_LOGIN_BRANDING_ID=""
+          fi
         else
           MANAGED_LOGIN_BRANDING_ID=""
         fi
@@ -319,7 +347,7 @@ runs:
     - name: Warning when infrastructure missing but apply would be skipped
       if: inputs.action == 'apply' && inputs.enable_managed_login_branding == 'true' && steps.check_assets.outputs.assets_changed != 'true' && steps.check_infrastructure.outputs.infrastructure_exists == 'false'
       run: |
-        echo "::warning::Managed login branding is enabled but no assets changed and no infrastructure exists. This would normally skip apply but infrastructure is missing, so apply will run to create initial resources."
+        echo "::warning::Managed login branding is enabled but infrastructure is missing or incomplete. Apply will run to create/update all required resources including managed login branding."
       shell: bash
 
     - name: Get existing outputs when apply is skipped
@@ -337,7 +365,13 @@ runs:
         MANAGED_LOGIN_BRANDING_ENABLED=$(terraform output -raw managed_login_branding_enabled | tr -d '\r\n')
         MANAGED_LOGIN_VERSION=$(terraform output -raw managed_login_version | tr -d '\r\n')
         if [ "${{ inputs.enable_managed_login_branding }}" == "true" ]; then
-          MANAGED_LOGIN_BRANDING_ID=$(terraform output -raw managed_login_branding_id | tr -d '\r\n')
+          # Check if managed_login_branding_id output exists before trying to retrieve it
+          if terraform output managed_login_branding_id >/dev/null 2>&1; then
+            MANAGED_LOGIN_BRANDING_ID=$(terraform output -raw managed_login_branding_id | tr -d '\r\n')
+          else
+            echo "Warning: managed_login_branding_id output not found in state, setting to empty"
+            MANAGED_LOGIN_BRANDING_ID=""
+          fi
         else
           MANAGED_LOGIN_BRANDING_ID=""
         fi
