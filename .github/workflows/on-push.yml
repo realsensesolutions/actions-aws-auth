@@ -23,7 +23,7 @@ jobs:
           instance: auth-demo
       - uses: ./
         with: 
-          action: apply
+          action: destroy
           name: auth
           callback_urls: "https://example.com/callback"
           logout_urls: "https://example.com"
