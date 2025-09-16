@@ -245,7 +245,11 @@ runs:
         COGNITO_DOMAIN=$(terraform output -raw cognito_domain | tr -d '\r\n')
         MANAGED_LOGIN_BRANDING_ENABLED=$(terraform output -raw managed_login_branding_enabled | tr -d '\r\n')
         MANAGED_LOGIN_VERSION=$(terraform output -raw managed_login_version | tr -d '\r\n')
-        MANAGED_LOGIN_BRANDING_ID=$(terraform output -raw managed_login_branding_id | tr -d '\r\n')
+        if [ "${{ inputs.enable_managed_login_branding }}" == "true" ]; then
+          MANAGED_LOGIN_BRANDING_ID=$(terraform output -raw managed_login_branding_id | tr -d '\r\n')
+        else
+          MANAGED_LOGIN_BRANDING_ID=""
+        fi
         HOSTED_UI_URL=$(terraform output -raw hosted_ui_url | tr -d '\r\n')
         GOOGLE_IDENTITY_PROVIDER_ENABLED=$(terraform output -raw google_identity_provider_enabled | tr -d '\r\n')
         if [ "${{ inputs.enable_google_identity_provider }}" == "true" ]; then
@@ -299,7 +303,11 @@ runs:
         COGNITO_DOMAIN=$(terraform output -raw cognito_domain | tr -d '\r\n')
         MANAGED_LOGIN_BRANDING_ENABLED=$(terraform output -raw managed_login_branding_enabled | tr -d '\r\n')
         MANAGED_LOGIN_VERSION=$(terraform output -raw managed_login_version | tr -d '\r\n')
-        MANAGED_LOGIN_BRANDING_ID=$(terraform output -raw managed_login_branding_id | tr -d '\r\n')
+        if [ "${{ inputs.enable_managed_login_branding }}" == "true" ]; then
+          MANAGED_LOGIN_BRANDING_ID=$(terraform output -raw managed_login_branding_id | tr -d '\r\n')
+        else
+          MANAGED_LOGIN_BRANDING_ID=""
+        fi
         HOSTED_UI_URL=$(terraform output -raw hosted_ui_url | tr -d '\r\n')
         GOOGLE_IDENTITY_PROVIDER_ENABLED=$(terraform output -raw google_identity_provider_enabled | tr -d '\r\n')
         if [ "${{ inputs.enable_google_identity_provider }}" == "true" ]; then
