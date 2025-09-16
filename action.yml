@@ -217,9 +217,36 @@ runs:
             core.setOutput('assets_changed', 'true');
           }
 
+    - name: Check if infrastructure exists (for optimization)
+      id: check_infrastructure
+      if: inputs.action == 'apply' && inputs.enable_managed_login_branding == 'true' && steps.check_assets.outputs.assets_changed != 'true'
+      run: |
+        # Check if Terraform state exists and contains required resources
+        if terraform state list 2>/dev/null | grep -q "aws_cognito_user_pool.this"; then
+          echo "infrastructure_exists=true" >> "$GITHUB_OUTPUT"
+          echo "Infrastructure exists, apply can be skipped if only assets might have changed"
+        else
+          echo "infrastructure_exists=false" >> "$GITHUB_OUTPUT"
+          echo "No infrastructure found, apply must run even without asset changes"
+        fi
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      env:
+        TF_VAR_name: ${{ inputs.name }}
+        TF_VAR_callback_urls: ${{ inputs.callback_urls }}
+        TF_VAR_logout_urls: ${{ inputs.logout_urls }}
+        TF_VAR_enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}
+        TF_VAR_login_position: ${{ inputs.login_position }}
+        TF_VAR_enable_google_identity_provider: ${{ inputs.enable_google_identity_provider }}
+        TF_VAR_google_client_id: ${{ inputs.google_client_id }}
+        TF_VAR_google_client_secret: ${{ inputs.google_client_secret }}
+        TF_VAR_background_asset_path: ${{ inputs.background_asset_path && format('{0}/{1}', github.workspace, inputs.background_asset_path) || '' }}
+        TF_VAR_logo_asset_path: ${{ inputs.logo_asset_path && format('{0}/{1}', github.workspace, inputs.logo_asset_path) || '' }}
+        TF_VAR_favicon_asset_path: ${{ inputs.favicon_asset_path && format('{0}/{1}', github.workspace, inputs.favicon_asset_path) || '' }}
+
     - name: Terraform apply
       id: terraform
-      if: inputs.action == 'apply' && (inputs.enable_managed_login_branding != 'true' || steps.check_assets.outputs.assets_changed == 'true')
+      if: inputs.action == 'apply' && (inputs.enable_managed_login_branding != 'true' || steps.check_assets.outputs.assets_changed == 'true' || steps.check_infrastructure.outputs.infrastructure_exists == 'false')
       run: |
         # Force recreation of managed login branding only if assets have changed
         if [ "${{ inputs.enable_managed_login_branding }}" == "true" ]; then
@@ -289,9 +316,15 @@ runs:
         TF_VAR_logo_asset_path: ${{ inputs.logo_asset_path && format('{0}/{1}', github.workspace, inputs.logo_asset_path) || '' }}
         TF_VAR_favicon_asset_path: ${{ inputs.favicon_asset_path && format('{0}/{1}', github.workspace, inputs.favicon_asset_path) || '' }}
 
+    - name: Warning when infrastructure missing but apply would be skipped
+      if: inputs.action == 'apply' && inputs.enable_managed_login_branding == 'true' && steps.check_assets.outputs.assets_changed != 'true' && steps.check_infrastructure.outputs.infrastructure_exists == 'false'
+      run: |
+        echo "::warning::Managed login branding is enabled but no assets changed and no infrastructure exists. This would normally skip apply but infrastructure is missing, so apply will run to create initial resources."
+      shell: bash
+
     - name: Get existing outputs when apply is skipped
       id: terraform_skipped
-      if: inputs.action == 'apply' && inputs.enable_managed_login_branding == 'true' && steps.check_assets.outputs.assets_changed != 'true'
+      if: inputs.action == 'apply' && inputs.enable_managed_login_branding == 'true' && steps.check_assets.outputs.assets_changed != 'true' && steps.check_infrastructure.outputs.infrastructure_exists == 'true'
       run: |
         echo "Terraform apply was skipped because no branding assets changed. Getting existing outputs..."
         USER_POOL_ID=$(terraform output -raw user_pool_id | tr -d '\r\n')
