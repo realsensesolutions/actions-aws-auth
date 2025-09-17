@@ -75,6 +75,17 @@ variable "google_client_secret" {
   sensitive   = true
 }
 
+variable "google_provider_only" {
+  description = "When Google identity provider is enabled, use only Google provider (true) or both Google and Cognito (false)"
+  type        = bool
+  default     = false
+
+  validation {
+    condition     = !var.google_provider_only || (var.google_provider_only && var.enable_google_identity_provider)
+    error_message = "google_provider_only can only be true when enable_google_identity_provider is also true."
+  }
+}
+
 variable "admin_user" {
   description = "Enable creation of admin user in Cognito User Pool"
   type        = bool

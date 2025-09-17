@@ -60,6 +60,11 @@ output "google_identity_provider_enabled" {
   value       = var.enable_google_identity_provider
 }
 
+output "google_provider_only" {
+  description = "Whether only Google provider is used (excludes Cognito native auth)"
+  value       = var.google_provider_only
+}
+
 output "google_identity_provider_name" {
   description = "Name of the Google identity provider (if enabled)"
   value       = var.enable_google_identity_provider ? aws_cognito_identity_provider.google[0].provider_name : null

@@ -33,6 +33,10 @@ inputs:
     description: 'Enable Google identity provider for Cognito User Pool'
     required: false
     default: 'false'
+  google_provider_only:
+    description: 'When Google identity provider is enabled, use only Google provider (true) or both Google and Cognito (false)'
+    required: false
+    default: 'false'
   google_client_id:
     description: 'Google OAuth 2.0 client ID (required when enable_google_identity_provider is true)'
     required: false
@@ -99,6 +103,9 @@ outputs:
   google_identity_provider_enabled:
     description: 'Whether Google identity provider is enabled'
     value: ${{ steps.outputs.outputs.google_identity_provider_enabled }}
+  google_provider_only:
+    description: 'Whether only Google provider is used (excludes Cognito native auth)'
+    value: ${{ steps.outputs.outputs.google_provider_only }}
   google_identity_provider_name:
     description: 'Name of the Google identity provider (if enabled)'
     value: ${{ steps.outputs.outputs.google_identity_provider_name }}
@@ -136,6 +143,7 @@ runs:
         TF_VAR_enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}
         TF_VAR_login_position: ${{ inputs.login_position }}
         TF_VAR_enable_google_identity_provider: ${{ inputs.enable_google_identity_provider }}
+        TF_VAR_google_provider_only: ${{ inputs.google_provider_only }}
         TF_VAR_google_client_id: ${{ inputs.google_client_id }}
         TF_VAR_google_client_secret: ${{ inputs.google_client_secret }}
         TF_VAR_background_asset_path: ${{ inputs.background_asset_path && format('{0}/{1}', github.workspace, inputs.background_asset_path) || '' }}
@@ -156,6 +164,7 @@ runs:
         TF_VAR_enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}
         TF_VAR_login_position: ${{ inputs.login_position }}
         TF_VAR_enable_google_identity_provider: ${{ inputs.enable_google_identity_provider }}
+        TF_VAR_google_provider_only: ${{ inputs.google_provider_only }}
         TF_VAR_google_client_id: ${{ inputs.google_client_id }}
         TF_VAR_google_client_secret: ${{ inputs.google_client_secret }}
         TF_VAR_background_asset_path: ${{ inputs.background_asset_path && format('{0}/{1}', github.workspace, inputs.background_asset_path) || '' }}
@@ -186,6 +195,7 @@ runs:
         TF_VAR_enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}
         TF_VAR_login_position: ${{ inputs.login_position }}
         TF_VAR_enable_google_identity_provider: ${{ inputs.enable_google_identity_provider }}
+        TF_VAR_google_provider_only: ${{ inputs.google_provider_only }}
         TF_VAR_google_client_id: ${{ inputs.google_client_id }}
         TF_VAR_google_client_secret: ${{ inputs.google_client_secret }}
         TF_VAR_background_asset_path: ${{ inputs.background_asset_path && format('{0}/{1}', github.workspace, inputs.background_asset_path) || '' }}
@@ -283,6 +293,7 @@ runs:
         TF_VAR_enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}
         TF_VAR_login_position: ${{ inputs.login_position }}
         TF_VAR_enable_google_identity_provider: ${{ inputs.enable_google_identity_provider }}
+        TF_VAR_google_provider_only: ${{ inputs.google_provider_only }}
         TF_VAR_google_client_id: ${{ inputs.google_client_id }}
         TF_VAR_google_client_secret: ${{ inputs.google_client_secret }}
         TF_VAR_background_asset_path: ${{ inputs.background_asset_path && format('{0}/{1}', github.workspace, inputs.background_asset_path) || '' }}
@@ -332,6 +343,7 @@ runs:
         fi
         HOSTED_UI_URL=$(terraform output -raw hosted_ui_url | tr -d '\r\n')
         GOOGLE_IDENTITY_PROVIDER_ENABLED=$(terraform output -raw google_identity_provider_enabled | tr -d '\r\n')
+        GOOGLE_PROVIDER_ONLY=$(terraform output -raw google_provider_only | tr -d '\r\n')
         if [ "${{ inputs.enable_google_identity_provider }}" == "true" ]; then
           GOOGLE_IDENTITY_PROVIDER_NAME=$(terraform output -raw google_identity_provider_name | tr -d '\r\n')
         else
@@ -352,6 +364,7 @@ runs:
         echo "managed_login_branding_id=$MANAGED_LOGIN_BRANDING_ID" >> "$GITHUB_OUTPUT"
         echo "hosted_ui_url=$HOSTED_UI_URL" >> "$GITHUB_OUTPUT"
         echo "google_identity_provider_enabled=$GOOGLE_IDENTITY_PROVIDER_ENABLED" >> "$GITHUB_OUTPUT"
+        echo "google_provider_only=$GOOGLE_PROVIDER_ONLY" >> "$GITHUB_OUTPUT"
         echo "google_identity_provider_name=$GOOGLE_IDENTITY_PROVIDER_NAME" >> "$GITHUB_OUTPUT"
         echo "supported_identity_providers=$SUPPORTED_IDENTITY_PROVIDERS" >> "$GITHUB_OUTPUT"
       shell: bash
@@ -363,6 +376,7 @@ runs:
         TF_VAR_enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}
         TF_VAR_login_position: ${{ inputs.login_position }}
         TF_VAR_enable_google_identity_provider: ${{ inputs.enable_google_identity_provider }}
+        TF_VAR_google_provider_only: ${{ inputs.google_provider_only }}
         TF_VAR_google_client_id: ${{ inputs.google_client_id }}
         TF_VAR_google_client_secret: ${{ inputs.google_client_secret }}
         TF_VAR_background_asset_path: ${{ inputs.background_asset_path && format('{0}/{1}', github.workspace, inputs.background_asset_path) || '' }}
@@ -404,6 +418,7 @@ runs:
         fi
         HOSTED_UI_URL=$(terraform output -raw hosted_ui_url | tr -d '\r\n')
         GOOGLE_IDENTITY_PROVIDER_ENABLED=$(terraform output -raw google_identity_provider_enabled | tr -d '\r\n')
+        GOOGLE_PROVIDER_ONLY=$(terraform output -raw google_provider_only | tr -d '\r\n')
         if [ "${{ inputs.enable_google_identity_provider }}" == "true" ]; then
           GOOGLE_IDENTITY_PROVIDER_NAME=$(terraform output -raw google_identity_provider_name | tr -d '\r\n')
         else
@@ -424,6 +439,7 @@ runs:
         echo "managed_login_branding_id=$MANAGED_LOGIN_BRANDING_ID" >> "$GITHUB_OUTPUT"
         echo "hosted_ui_url=$HOSTED_UI_URL" >> "$GITHUB_OUTPUT"
         echo "google_identity_provider_enabled=$GOOGLE_IDENTITY_PROVIDER_ENABLED" >> "$GITHUB_OUTPUT"
+        echo "google_provider_only=$GOOGLE_PROVIDER_ONLY" >> "$GITHUB_OUTPUT"
         echo "google_identity_provider_name=$GOOGLE_IDENTITY_PROVIDER_NAME" >> "$GITHUB_OUTPUT"
         echo "supported_identity_providers=$SUPPORTED_IDENTITY_PROVIDERS" >> "$GITHUB_OUTPUT"
       shell: bash
@@ -435,6 +451,7 @@ runs:
         TF_VAR_enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}
         TF_VAR_login_position: ${{ inputs.login_position }}
         TF_VAR_enable_google_identity_provider: ${{ inputs.enable_google_identity_provider }}
+        TF_VAR_google_provider_only: ${{ inputs.google_provider_only }}
         TF_VAR_google_client_id: ${{ inputs.google_client_id }}
         TF_VAR_google_client_secret: ${{ inputs.google_client_secret }}
         TF_VAR_background_asset_path: ${{ inputs.background_asset_path && format('{0}/{1}', github.workspace, inputs.background_asset_path) || '' }}
@@ -461,6 +478,7 @@ runs:
           echo "managed_login_branding_id=destroyed" >> "$GITHUB_OUTPUT"
           echo "hosted_ui_url=destroyed" >> "$GITHUB_OUTPUT"
           echo "google_identity_provider_enabled=destroyed" >> "$GITHUB_OUTPUT"
+          echo "google_provider_only=destroyed" >> "$GITHUB_OUTPUT"
           echo "google_identity_provider_name=destroyed" >> "$GITHUB_OUTPUT"
           echo "supported_identity_providers=destroyed" >> "$GITHUB_OUTPUT"
         elif [ "${{ inputs.action }}" == "apply" ]; then
@@ -479,6 +497,7 @@ runs:
             echo "managed_login_branding_id=${{ steps.terraform.outputs.managed_login_branding_id }}" >> "$GITHUB_OUTPUT"
             echo "hosted_ui_url=${{ steps.terraform.outputs.hosted_ui_url }}" >> "$GITHUB_OUTPUT"
             echo "google_identity_provider_enabled=${{ steps.terraform.outputs.google_identity_provider_enabled }}" >> "$GITHUB_OUTPUT"
+            echo "google_provider_only=${{ steps.terraform.outputs.google_provider_only }}" >> "$GITHUB_OUTPUT"
             echo "google_identity_provider_name=${{ steps.terraform.outputs.google_identity_provider_name }}" >> "$GITHUB_OUTPUT"
             echo "supported_identity_providers=${{ steps.terraform.outputs.supported_identity_providers }}" >> "$GITHUB_OUTPUT"
           elif [ "${{ steps.terraform_skipped.conclusion }}" == "success" ]; then
@@ -495,6 +514,7 @@ runs:
             echo "managed_login_branding_id=${{ steps.terraform_skipped.outputs.managed_login_branding_id }}" >> "$GITHUB_OUTPUT"
             echo "hosted_ui_url=${{ steps.terraform_skipped.outputs.hosted_ui_url }}" >> "$GITHUB_OUTPUT"
             echo "google_identity_provider_enabled=${{ steps.terraform_skipped.outputs.google_identity_provider_enabled }}" >> "$GITHUB_OUTPUT"
+            echo "google_provider_only=${{ steps.terraform_skipped.outputs.google_provider_only }}" >> "$GITHUB_OUTPUT"
             echo "google_identity_provider_name=${{ steps.terraform_skipped.outputs.google_identity_provider_name }}" >> "$GITHUB_OUTPUT"
             echo "supported_identity_providers=${{ steps.terraform_skipped.outputs.supported_identity_providers }}" >> "$GITHUB_OUTPUT"
           fi
@@ -512,6 +532,7 @@ runs:
           echo "managed_login_branding_id=planned" >> "$GITHUB_OUTPUT"
           echo "hosted_ui_url=planned" >> "$GITHUB_OUTPUT"
           echo "google_identity_provider_enabled=planned" >> "$GITHUB_OUTPUT"
+          echo "google_provider_only=planned" >> "$GITHUB_OUTPUT"
           echo "google_identity_provider_name=planned" >> "$GITHUB_OUTPUT"
           echo "supported_identity_providers=planned" >> "$GITHUB_OUTPUT"
         fi

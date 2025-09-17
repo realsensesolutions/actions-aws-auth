@@ -211,8 +211,10 @@ resource "aws_cognito_user_pool_client" "this" {
   callback_urls = local.callback_urls
   logout_urls   = local.logout_urls
 
-  # Supported identity providers - include Google if enabled
-  supported_identity_providers = var.enable_google_identity_provider ? ["COGNITO", "Google"] : ["COGNITO"]
+  # Supported identity providers - dynamic based on Google configuration
+  supported_identity_providers = var.enable_google_identity_provider ? (
+    var.google_provider_only ? ["Google"] : ["COGNITO", "Google"]
+  ) : ["COGNITO"]
 
   # Token validity
   access_token_validity  = 1
