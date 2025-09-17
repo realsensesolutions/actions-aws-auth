@@ -250,3 +250,36 @@ resource "awscc_cognito_managed_login_branding" "this" {
   # Ensure domain is created first to enable managed login
   depends_on = [aws_cognito_user_pool_domain.this]
 }
+
+# Generate random password for admin user
+resource "random_password" "admin_password" {
+  count   = var.admin_user && var.admin_email != "" ? 1 : 0
+  length  = 16
+  special = true
+  upper   = true
+  lower   = true
+  numeric = true
+}
+
+# Create admin user (only if admin_user is true and admin_email is provided)
+resource "aws_cognito_user" "admin" {
+  count        = var.admin_user && var.admin_email != "" ? 1 : 0
+  user_pool_id = aws_cognito_user_pool.this.id
+  username     = "admin"
+  
+  # Set temporary password
+  temporary_password = random_password.admin_password[0].result
+  
+  # Send invitation email and force password change
+  message_action = "RESEND"
+  
+  attributes = {
+    email           = var.admin_email
+    email_verified  = true
+  }
+  
+  # Force password change on first login
+  desired_delivery_mediums = ["EMAIL"]
+  
+  depends_on = [aws_cognito_user_pool.this]
+}

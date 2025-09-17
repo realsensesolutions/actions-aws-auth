@@ -53,6 +53,14 @@ inputs:
     description: 'Path to favicon asset relative to workspace root (supported: ico, png)'
     required: false
     default: ''
+  admin_user:
+    description: 'Enable creation of admin user in Cognito User Pool'
+    required: false
+    default: 'false'
+  admin_email:
+    description: 'Email address for the admin user (required when admin_user is true)'
+    required: false
+    default: ''
 
 outputs:
   user_pool_id:
@@ -97,6 +105,15 @@ outputs:
   supported_identity_providers:
     description: 'List of supported identity providers'
     value: ${{ steps.outputs.outputs.supported_identity_providers }}
+  admin_user_enabled:
+    description: 'Whether admin user creation is enabled'
+    value: ${{ steps.outputs.outputs.admin_user_enabled }}
+  admin_user_created:
+    description: 'Whether admin user was actually created (requires both admin_user=true and valid admin_email)'
+    value: ${{ steps.outputs.outputs.admin_user_created }}
+  admin_username:
+    description: 'Username of the admin user (if created)'
+    value: ${{ steps.outputs.outputs.admin_username }}
 
 runs:
   using: "composite"
@@ -124,6 +141,8 @@ runs:
         TF_VAR_background_asset_path: ${{ inputs.background_asset_path && format('{0}/{1}', github.workspace, inputs.background_asset_path) || '' }}
         TF_VAR_logo_asset_path: ${{ inputs.logo_asset_path && format('{0}/{1}', github.workspace, inputs.logo_asset_path) || '' }}
         TF_VAR_favicon_asset_path: ${{ inputs.favicon_asset_path && format('{0}/{1}', github.workspace, inputs.favicon_asset_path) || '' }}
+        TF_VAR_admin_user: ${{ inputs.admin_user }}
+        TF_VAR_admin_email: ${{ inputs.admin_email }}
 
     - name: Terraform plan
       if: inputs.action == 'plan'
@@ -142,6 +161,8 @@ runs:
         TF_VAR_background_asset_path: ${{ inputs.background_asset_path && format('{0}/{1}', github.workspace, inputs.background_asset_path) || '' }}
         TF_VAR_logo_asset_path: ${{ inputs.logo_asset_path && format('{0}/{1}', github.workspace, inputs.logo_asset_path) || '' }}
         TF_VAR_favicon_asset_path: ${{ inputs.favicon_asset_path && format('{0}/{1}', github.workspace, inputs.favicon_asset_path) || '' }}
+        TF_VAR_admin_user: ${{ inputs.admin_user }}
+        TF_VAR_admin_email: ${{ inputs.admin_email }}
 
     - name: Terraform init and destroy
       if: inputs.action == 'destroy'
@@ -170,6 +191,8 @@ runs:
         TF_VAR_background_asset_path: ${{ inputs.background_asset_path && format('{0}/{1}', github.workspace, inputs.background_asset_path) || '' }}
         TF_VAR_logo_asset_path: ${{ inputs.logo_asset_path && format('{0}/{1}', github.workspace, inputs.logo_asset_path) || '' }}
         TF_VAR_favicon_asset_path: ${{ inputs.favicon_asset_path && format('{0}/{1}', github.workspace, inputs.favicon_asset_path) || '' }}
+        TF_VAR_admin_user: ${{ inputs.admin_user }}
+        TF_VAR_admin_email: ${{ inputs.admin_email }}
 
     - name: Debug step - Show current configuration
       if: inputs.action == 'apply'
@@ -265,6 +288,8 @@ runs:
         TF_VAR_background_asset_path: ${{ inputs.background_asset_path && format('{0}/{1}', github.workspace, inputs.background_asset_path) || '' }}
         TF_VAR_logo_asset_path: ${{ inputs.logo_asset_path && format('{0}/{1}', github.workspace, inputs.logo_asset_path) || '' }}
         TF_VAR_favicon_asset_path: ${{ inputs.favicon_asset_path && format('{0}/{1}', github.workspace, inputs.favicon_asset_path) || '' }}
+        TF_VAR_admin_user: ${{ inputs.admin_user }}
+        TF_VAR_admin_email: ${{ inputs.admin_email }}
 
     - name: Terraform apply
       id: terraform
@@ -343,6 +368,8 @@ runs:
         TF_VAR_background_asset_path: ${{ inputs.background_asset_path && format('{0}/{1}', github.workspace, inputs.background_asset_path) || '' }}
         TF_VAR_logo_asset_path: ${{ inputs.logo_asset_path && format('{0}/{1}', github.workspace, inputs.logo_asset_path) || '' }}
         TF_VAR_favicon_asset_path: ${{ inputs.favicon_asset_path && format('{0}/{1}', github.workspace, inputs.favicon_asset_path) || '' }}
+        TF_VAR_admin_user: ${{ inputs.admin_user }}
+        TF_VAR_admin_email: ${{ inputs.admin_email }}
 
     - name: Warning when infrastructure missing but apply would be skipped
       if: inputs.action == 'apply' && inputs.enable_managed_login_branding == 'true' && steps.check_assets.outputs.assets_changed != 'true' && steps.check_infrastructure.outputs.infrastructure_exists == 'false'
@@ -413,6 +440,8 @@ runs:
         TF_VAR_background_asset_path: ${{ inputs.background_asset_path && format('{0}/{1}', github.workspace, inputs.background_asset_path) || '' }}
         TF_VAR_logo_asset_path: ${{ inputs.logo_asset_path && format('{0}/{1}', github.workspace, inputs.logo_asset_path) || '' }}
         TF_VAR_favicon_asset_path: ${{ inputs.favicon_asset_path && format('{0}/{1}', github.workspace, inputs.favicon_asset_path) || '' }}
+        TF_VAR_admin_user: ${{ inputs.admin_user }}
+        TF_VAR_admin_email: ${{ inputs.admin_email }}
 
     - name: Set final outputs
       id: outputs

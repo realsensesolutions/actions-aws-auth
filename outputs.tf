@@ -69,3 +69,18 @@ output "supported_identity_providers" {
   description = "List of supported identity providers (comma-separated)"
   value       = join(",", aws_cognito_user_pool_client.this.supported_identity_providers)
 }
+
+output "admin_user_enabled" {
+  description = "Whether admin user creation is enabled"
+  value       = var.admin_user
+}
+
+output "admin_user_created" {
+  description = "Whether admin user was actually created (requires both admin_user=true and valid admin_email)"
+  value       = var.admin_user && var.admin_email != ""
+}
+
+output "admin_username" {
+  description = "Username of the admin user (if created)"
+  value       = var.admin_user && var.admin_email != "" ? "admin" : null
+}
