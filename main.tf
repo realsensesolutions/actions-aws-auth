@@ -270,9 +270,6 @@ resource "aws_cognito_user" "admin" {
   # Set temporary password
   temporary_password = random_password.admin_password[0].result
   
-  # Send invitation email and force password change
-  message_action = "RESEND"
-  
   attributes = {
     email           = var.admin_email
     email_verified  = true
@@ -280,6 +277,15 @@ resource "aws_cognito_user" "admin" {
   
   # Force password change on first login
   desired_delivery_mediums = ["EMAIL"]
+  
+  # Handle cases where user might already exist
+  lifecycle {
+    ignore_changes = [
+      # Ignore changes to password after initial creation
+      # This prevents recreation if user has changed their password
+      temporary_password,
+    ]
+  }
   
   depends_on = [aws_cognito_user_pool.this]
 }
