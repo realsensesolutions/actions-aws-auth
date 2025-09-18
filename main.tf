@@ -80,9 +80,9 @@ resource "aws_cognito_user_pool" "this" {
   # Email verification configuration
   auto_verified_attributes = ["email"]
 
-  # Allow users to sign themselves up
+  # Self-registration configuration
   admin_create_user_config {
-    allow_admin_create_user_only = false
+    allow_admin_create_user_only = !var.self_registration
   }
 
   # MFA configuration

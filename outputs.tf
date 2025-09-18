@@ -75,6 +75,11 @@ output "supported_identity_providers" {
   value       = join(",", aws_cognito_user_pool_client.this.supported_identity_providers)
 }
 
+output "self_registration_enabled" {
+  description = "Whether users can sign themselves up"
+  value       = var.self_registration
+}
+
 output "admin_user_created" {
   description = "Whether admin user was created (true when admin_email is provided)"
   value       = var.admin_email != ""

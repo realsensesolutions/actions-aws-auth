@@ -83,6 +83,12 @@ variable "google_client_secret" {
   sensitive   = true
 }
 
+variable "self_registration" {
+  description = "Allow users to sign themselves up (true) or require admin to create users (false)"
+  type        = bool
+  default     = true
+}
+
 variable "admin_email" {
   description = "Email address for the admin user (if provided, admin user will be created automatically)"
   type        = string

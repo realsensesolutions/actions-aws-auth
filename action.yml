@@ -53,6 +53,10 @@ inputs:
     description: 'Path to favicon asset relative to workspace root (supported: ico, png)'
     required: false
     default: ''
+  self_registration:
+    description: 'Allow users to sign themselves up (true) or require admin to create users (false)'
+    required: false
+    default: 'true'
   admin_email:
     description: 'Email address for the admin user (if provided, admin user will be created)'
     required: false
@@ -104,6 +108,9 @@ outputs:
   supported_identity_providers:
     description: 'List of supported identity providers'
     value: ${{ steps.outputs.outputs.supported_identity_providers }}
+  self_registration_enabled:
+    description: 'Whether users can sign themselves up'
+    value: ${{ steps.outputs.outputs.self_registration_enabled }}
   admin_user_created:
     description: 'Whether admin user was created (true when admin_email is provided)'
     value: ${{ steps.outputs.outputs.admin_user_created }}
@@ -132,6 +139,7 @@ runs:
         TF_VAR_enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}
         TF_VAR_login_position: ${{ inputs.login_position }}
         TF_VAR_idp: ${{ inputs.idp }}
+        TF_VAR_self_registration: ${{ inputs.self_registration }}
         TF_VAR_google_client_id: ${{ inputs.google_client_id }}
         TF_VAR_google_client_secret: ${{ inputs.google_client_secret }}
         TF_VAR_background_asset_path: ${{ inputs.background_asset_path && format('{0}/{1}', github.workspace, inputs.background_asset_path) || '' }}
@@ -151,6 +159,7 @@ runs:
         TF_VAR_enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}
         TF_VAR_login_position: ${{ inputs.login_position }}
         TF_VAR_idp: ${{ inputs.idp }}
+        TF_VAR_self_registration: ${{ inputs.self_registration }}
         TF_VAR_google_client_id: ${{ inputs.google_client_id }}
         TF_VAR_google_client_secret: ${{ inputs.google_client_secret }}
         TF_VAR_background_asset_path: ${{ inputs.background_asset_path && format('{0}/{1}', github.workspace, inputs.background_asset_path) || '' }}
@@ -180,6 +189,7 @@ runs:
         TF_VAR_enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}
         TF_VAR_login_position: ${{ inputs.login_position }}
         TF_VAR_idp: ${{ inputs.idp }}
+        TF_VAR_self_registration: ${{ inputs.self_registration }}
         TF_VAR_google_client_id: ${{ inputs.google_client_id }}
         TF_VAR_google_client_secret: ${{ inputs.google_client_secret }}
         TF_VAR_background_asset_path: ${{ inputs.background_asset_path && format('{0}/{1}', github.workspace, inputs.background_asset_path) || '' }}
@@ -336,6 +346,7 @@ runs:
           GOOGLE_IDENTITY_PROVIDER_NAME=""
         fi
         SUPPORTED_IDENTITY_PROVIDERS=$(terraform output -raw supported_identity_providers | tr -d '\r\n')
+        SELF_REGISTRATION_ENABLED=$(terraform output -raw self_registration_enabled | tr -d '\r\n')
 
         # Set outputs temporarily
         echo "user_pool_id=$USER_POOL_ID" >> "$GITHUB_OUTPUT"
@@ -353,6 +364,7 @@ runs:
         echo "google_provider_only=$GOOGLE_PROVIDER_ONLY" >> "$GITHUB_OUTPUT"
         echo "google_identity_provider_name=$GOOGLE_IDENTITY_PROVIDER_NAME" >> "$GITHUB_OUTPUT"
         echo "supported_identity_providers=$SUPPORTED_IDENTITY_PROVIDERS" >> "$GITHUB_OUTPUT"
+        echo "self_registration_enabled=$SELF_REGISTRATION_ENABLED" >> "$GITHUB_OUTPUT"
       shell: bash
       working-directory: ${{ github.action_path }}
       env:
@@ -362,6 +374,7 @@ runs:
         TF_VAR_enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}
         TF_VAR_login_position: ${{ inputs.login_position }}
         TF_VAR_idp: ${{ inputs.idp }}
+        TF_VAR_self_registration: ${{ inputs.self_registration }}
         TF_VAR_google_client_id: ${{ inputs.google_client_id }}
         TF_VAR_google_client_secret: ${{ inputs.google_client_secret }}
         TF_VAR_background_asset_path: ${{ inputs.background_asset_path && format('{0}/{1}', github.workspace, inputs.background_asset_path) || '' }}
@@ -411,6 +424,7 @@ runs:
           GOOGLE_IDENTITY_PROVIDER_NAME=""
         fi
         SUPPORTED_IDENTITY_PROVIDERS=$(terraform output -raw supported_identity_providers | tr -d '\r\n')
+        SELF_REGISTRATION_ENABLED=$(terraform output -raw self_registration_enabled | tr -d '\r\n')
 
         # Set outputs
         echo "user_pool_id=$USER_POOL_ID" >> "$GITHUB_OUTPUT"
@@ -428,6 +442,7 @@ runs:
         echo "google_provider_only=$GOOGLE_PROVIDER_ONLY" >> "$GITHUB_OUTPUT"
         echo "google_identity_provider_name=$GOOGLE_IDENTITY_PROVIDER_NAME" >> "$GITHUB_OUTPUT"
         echo "supported_identity_providers=$SUPPORTED_IDENTITY_PROVIDERS" >> "$GITHUB_OUTPUT"
+        echo "self_registration_enabled=$SELF_REGISTRATION_ENABLED" >> "$GITHUB_OUTPUT"
       shell: bash
       working-directory: ${{ github.action_path }}
       env:
@@ -437,6 +452,7 @@ runs:
         TF_VAR_enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}
         TF_VAR_login_position: ${{ inputs.login_position }}
         TF_VAR_idp: ${{ inputs.idp }}
+        TF_VAR_self_registration: ${{ inputs.self_registration }}
         TF_VAR_google_client_id: ${{ inputs.google_client_id }}
         TF_VAR_google_client_secret: ${{ inputs.google_client_secret }}
         TF_VAR_background_asset_path: ${{ inputs.background_asset_path && format('{0}/{1}', github.workspace, inputs.background_asset_path) || '' }}
@@ -465,6 +481,7 @@ runs:
           echo "google_provider_only=destroyed" >> "$GITHUB_OUTPUT"
           echo "google_identity_provider_name=destroyed" >> "$GITHUB_OUTPUT"
           echo "supported_identity_providers=destroyed" >> "$GITHUB_OUTPUT"
+          echo "self_registration_enabled=destroyed" >> "$GITHUB_OUTPUT"
         elif [ "${{ inputs.action }}" == "apply" ]; then
           # Use outputs from apply step or skipped step
           if [ "${{ steps.terraform.conclusion }}" == "success" ]; then
@@ -484,6 +501,7 @@ runs:
             echo "google_provider_only=${{ steps.terraform.outputs.google_provider_only }}" >> "$GITHUB_OUTPUT"
             echo "google_identity_provider_name=${{ steps.terraform.outputs.google_identity_provider_name }}" >> "$GITHUB_OUTPUT"
             echo "supported_identity_providers=${{ steps.terraform.outputs.supported_identity_providers }}" >> "$GITHUB_OUTPUT"
+            echo "self_registration_enabled=${{ steps.terraform.outputs.self_registration_enabled }}" >> "$GITHUB_OUTPUT"
           elif [ "${{ steps.terraform_skipped.conclusion }}" == "success" ]; then
             # Use outputs from skipped step
             echo "user_pool_id=${{ steps.terraform_skipped.outputs.user_pool_id }}" >> "$GITHUB_OUTPUT"
@@ -501,6 +519,7 @@ runs:
             echo "google_provider_only=${{ steps.terraform_skipped.outputs.google_provider_only }}" >> "$GITHUB_OUTPUT"
             echo "google_identity_provider_name=${{ steps.terraform_skipped.outputs.google_identity_provider_name }}" >> "$GITHUB_OUTPUT"
             echo "supported_identity_providers=${{ steps.terraform_skipped.outputs.supported_identity_providers }}" >> "$GITHUB_OUTPUT"
+            echo "self_registration_enabled=${{ steps.terraform_skipped.outputs.self_registration_enabled }}" >> "$GITHUB_OUTPUT"
           fi
         else
           # For plan action, set placeholder values
@@ -519,4 +538,5 @@ runs:
           echo "google_provider_only=planned" >> "$GITHUB_OUTPUT"
           echo "google_identity_provider_name=planned" >> "$GITHUB_OUTPUT"
           echo "supported_identity_providers=planned" >> "$GITHUB_OUTPUT"
+          echo "self_registration_enabled=planned" >> "$GITHUB_OUTPUT"
         fi
