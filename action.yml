@@ -381,17 +381,21 @@ runs:
       id: terraform
       if: inputs.action == 'apply' && (inputs.enable_managed_login_branding != 'true' || steps.check_assets.outputs.assets_changed == 'true' || steps.check_infrastructure.outputs.infrastructure_exists == 'false' || steps.check_terraform_config.outputs.terraform_changed == 'true' || steps.check_input_config.outputs.input_config_changed == 'true')
       run: |
-        # Force recreation of managed login branding only if assets have changed
+        # Force recreation of managed login branding if assets or input config have changed
         if [ "${{ inputs.enable_managed_login_branding }}" == "true" ]; then
-          if [ "${{ steps.check_assets.outputs.assets_changed }}" == "true" ]; then
+          if [ "${{ steps.check_assets.outputs.assets_changed }}" == "true" ] || [ "${{ steps.check_input_config.outputs.input_config_changed }}" == "true" ]; then
             if terraform state list | grep -q "awscc_cognito_managed_login_branding.this"; then
-              echo "Asset files have changed. Tainting managed login branding resource to force recreation..."
+              if [ "${{ steps.check_assets.outputs.assets_changed }}" == "true" ]; then
+                echo "Asset files have changed. Tainting managed login branding resource to force recreation..."
+              else
+                echo "Input configuration has changed. Tainting managed login branding resource to force recreation..."
+              fi
               terraform taint 'awscc_cognito_managed_login_branding.this[0]' || true
             else
               echo "Managed login branding resource not found in state, will be created fresh"
             fi
           else
-            echo "No asset files have changed. Skipping taint of managed login branding resource."
+            echo "No asset files or input configuration have changed. Skipping taint of managed login branding resource."
           fi
         fi
         
