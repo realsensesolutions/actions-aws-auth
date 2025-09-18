@@ -83,19 +83,13 @@ variable "google_client_secret" {
   sensitive   = true
 }
 
-variable "admin_user" {
-  description = "Enable creation of admin user in Cognito User Pool"
-  type        = bool
-  default     = false
-}
-
 variable "admin_email" {
-  description = "Email address for the admin user (required when admin_user is true)"
+  description = "Email address for the admin user (if provided, admin user will be created automatically)"
   type        = string
   default     = ""
 
   validation {
-    condition = var.admin_user == false || (var.admin_user == true && can(regex("^[\\w\\.-]+@[\\w\\.-]+\\.[a-zA-Z]{2,}$", var.admin_email)))
-    error_message = "When admin_user is true, admin_email must be a valid email address."
+    condition = var.admin_email == "" || can(regex("^[\\w\\.-]+@[\\w\\.-]+\\.[a-zA-Z]{2,}$", var.admin_email))
+    error_message = "admin_email must be a valid email address or empty."
   }
 }

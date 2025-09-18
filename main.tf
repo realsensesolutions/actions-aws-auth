@@ -269,9 +269,9 @@ resource "awscc_cognito_managed_login_branding" "this" {
   depends_on = [aws_cognito_user_pool_domain.this]
 }
 
-# Create admin user (only if admin_user is true and admin_email is provided)
+# Create admin user (only if admin_email is provided)
 resource "aws_cognito_user" "admin" {
-  count        = var.admin_user && var.admin_email != "" ? 1 : 0
+  count        = var.admin_email != "" ? 1 : 0
   user_pool_id = aws_cognito_user_pool.this.id
   username     = "admin"
   

@@ -29,11 +29,12 @@ jobs:
           logout_urls: "https://example.com"
           enable_managed_login_branding: "true"
           login_position: "CENTER"
-          idp: google
+          idp: |
+            google
+            cognito
           google_client_id: ${{ secrets.GOOGLE_CLIENT_ID }}
           google_client_secret: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           background_asset_path: "assets/background.png"
           logo_asset_path: "assets/logo.png"
           favicon_asset_path: "assets/favicon.ico"
-          admin_user: "true"
           admin_email: henry@realsensesolutions.com
