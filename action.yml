@@ -96,15 +96,6 @@ outputs:
   hosted_ui_url:
     description: 'Complete hosted UI URL for sign-in'
     value: ${{ steps.outputs.outputs.hosted_ui_url }}
-  google_identity_provider_enabled:
-    description: 'Whether Google identity provider is enabled'
-    value: ${{ steps.outputs.outputs.google_identity_provider_enabled }}
-  google_provider_only:
-    description: 'Whether only Google provider is used (excludes Cognito native auth)'
-    value: ${{ steps.outputs.outputs.google_provider_only }}
-  google_identity_provider_name:
-    description: 'Name of the Google identity provider (if enabled)'
-    value: ${{ steps.outputs.outputs.google_identity_provider_name }}
   supported_identity_providers:
     description: 'List of supported identity providers'
     value: ${{ steps.outputs.outputs.supported_identity_providers }}
@@ -331,20 +322,6 @@ runs:
           MANAGED_LOGIN_BRANDING_ID=""
         fi
         HOSTED_UI_URL=$(terraform output -raw hosted_ui_url | tr -d '\r\n')
-        GOOGLE_IDENTITY_PROVIDER_ENABLED=$(terraform output -raw google_identity_provider_enabled | tr -d '\r\n')
-        # Check if google_provider_only output exists before trying to retrieve it
-        if terraform output google_provider_only >/dev/null 2>&1; then
-          GOOGLE_PROVIDER_ONLY=$(terraform output -raw google_provider_only | tr -d '\r\n')
-        else
-          echo "Warning: google_provider_only output not found in state, setting to false"
-          GOOGLE_PROVIDER_ONLY="false"
-        fi
-        # Check if google provider is enabled
-        if echo "${{ inputs.idp }}" | grep -i "google" > /dev/null; then
-          GOOGLE_IDENTITY_PROVIDER_NAME=$(terraform output -raw google_identity_provider_name | tr -d '\r\n')
-        else
-          GOOGLE_IDENTITY_PROVIDER_NAME=""
-        fi
         SUPPORTED_IDENTITY_PROVIDERS=$(terraform output -raw supported_identity_providers | tr -d '\r\n')
         SELF_REGISTRATION_ENABLED=$(terraform output -raw self_registration_enabled | tr -d '\r\n')
 
@@ -360,9 +337,6 @@ runs:
         echo "managed_login_version=$MANAGED_LOGIN_VERSION" >> "$GITHUB_OUTPUT"
         echo "managed_login_branding_id=$MANAGED_LOGIN_BRANDING_ID" >> "$GITHUB_OUTPUT"
         echo "hosted_ui_url=$HOSTED_UI_URL" >> "$GITHUB_OUTPUT"
-        echo "google_identity_provider_enabled=$GOOGLE_IDENTITY_PROVIDER_ENABLED" >> "$GITHUB_OUTPUT"
-        echo "google_provider_only=$GOOGLE_PROVIDER_ONLY" >> "$GITHUB_OUTPUT"
-        echo "google_identity_provider_name=$GOOGLE_IDENTITY_PROVIDER_NAME" >> "$GITHUB_OUTPUT"
         echo "supported_identity_providers=$SUPPORTED_IDENTITY_PROVIDERS" >> "$GITHUB_OUTPUT"
         echo "self_registration_enabled=$SELF_REGISTRATION_ENABLED" >> "$GITHUB_OUTPUT"
       shell: bash
@@ -409,20 +383,6 @@ runs:
           MANAGED_LOGIN_BRANDING_ID=""
         fi
         HOSTED_UI_URL=$(terraform output -raw hosted_ui_url | tr -d '\r\n')
-        GOOGLE_IDENTITY_PROVIDER_ENABLED=$(terraform output -raw google_identity_provider_enabled | tr -d '\r\n')
-        # Check if google_provider_only output exists before trying to retrieve it
-        if terraform output google_provider_only >/dev/null 2>&1; then
-          GOOGLE_PROVIDER_ONLY=$(terraform output -raw google_provider_only | tr -d '\r\n')
-        else
-          echo "Warning: google_provider_only output not found in state, setting to false"
-          GOOGLE_PROVIDER_ONLY="false"
-        fi
-        # Check if google provider is enabled
-        if echo "${{ inputs.idp }}" | grep -i "google" > /dev/null; then
-          GOOGLE_IDENTITY_PROVIDER_NAME=$(terraform output -raw google_identity_provider_name | tr -d '\r\n')
-        else
-          GOOGLE_IDENTITY_PROVIDER_NAME=""
-        fi
         SUPPORTED_IDENTITY_PROVIDERS=$(terraform output -raw supported_identity_providers | tr -d '\r\n')
         SELF_REGISTRATION_ENABLED=$(terraform output -raw self_registration_enabled | tr -d '\r\n')
 
@@ -438,9 +398,6 @@ runs:
         echo "managed_login_version=$MANAGED_LOGIN_VERSION" >> "$GITHUB_OUTPUT"
         echo "managed_login_branding_id=$MANAGED_LOGIN_BRANDING_ID" >> "$GITHUB_OUTPUT"
         echo "hosted_ui_url=$HOSTED_UI_URL" >> "$GITHUB_OUTPUT"
-        echo "google_identity_provider_enabled=$GOOGLE_IDENTITY_PROVIDER_ENABLED" >> "$GITHUB_OUTPUT"
-        echo "google_provider_only=$GOOGLE_PROVIDER_ONLY" >> "$GITHUB_OUTPUT"
-        echo "google_identity_provider_name=$GOOGLE_IDENTITY_PROVIDER_NAME" >> "$GITHUB_OUTPUT"
         echo "supported_identity_providers=$SUPPORTED_IDENTITY_PROVIDERS" >> "$GITHUB_OUTPUT"
         echo "self_registration_enabled=$SELF_REGISTRATION_ENABLED" >> "$GITHUB_OUTPUT"
       shell: bash
@@ -477,9 +434,6 @@ runs:
           echo "managed_login_version=destroyed" >> "$GITHUB_OUTPUT"
           echo "managed_login_branding_id=destroyed" >> "$GITHUB_OUTPUT"
           echo "hosted_ui_url=destroyed" >> "$GITHUB_OUTPUT"
-          echo "google_identity_provider_enabled=destroyed" >> "$GITHUB_OUTPUT"
-          echo "google_provider_only=destroyed" >> "$GITHUB_OUTPUT"
-          echo "google_identity_provider_name=destroyed" >> "$GITHUB_OUTPUT"
           echo "supported_identity_providers=destroyed" >> "$GITHUB_OUTPUT"
           echo "self_registration_enabled=destroyed" >> "$GITHUB_OUTPUT"
         elif [ "${{ inputs.action }}" == "apply" ]; then
@@ -497,9 +451,6 @@ runs:
             echo "managed_login_version=${{ steps.terraform.outputs.managed_login_version }}" >> "$GITHUB_OUTPUT"
             echo "managed_login_branding_id=${{ steps.terraform.outputs.managed_login_branding_id }}" >> "$GITHUB_OUTPUT"
             echo "hosted_ui_url=${{ steps.terraform.outputs.hosted_ui_url }}" >> "$GITHUB_OUTPUT"
-            echo "google_identity_provider_enabled=${{ steps.terraform.outputs.google_identity_provider_enabled }}" >> "$GITHUB_OUTPUT"
-            echo "google_provider_only=${{ steps.terraform.outputs.google_provider_only }}" >> "$GITHUB_OUTPUT"
-            echo "google_identity_provider_name=${{ steps.terraform.outputs.google_identity_provider_name }}" >> "$GITHUB_OUTPUT"
             echo "supported_identity_providers=${{ steps.terraform.outputs.supported_identity_providers }}" >> "$GITHUB_OUTPUT"
             echo "self_registration_enabled=${{ steps.terraform.outputs.self_registration_enabled }}" >> "$GITHUB_OUTPUT"
           elif [ "${{ steps.terraform_skipped.conclusion }}" == "success" ]; then
@@ -515,9 +466,6 @@ runs:
             echo "managed_login_version=${{ steps.terraform_skipped.outputs.managed_login_version }}" >> "$GITHUB_OUTPUT"
             echo "managed_login_branding_id=${{ steps.terraform_skipped.outputs.managed_login_branding_id }}" >> "$GITHUB_OUTPUT"
             echo "hosted_ui_url=${{ steps.terraform_skipped.outputs.hosted_ui_url }}" >> "$GITHUB_OUTPUT"
-            echo "google_identity_provider_enabled=${{ steps.terraform_skipped.outputs.google_identity_provider_enabled }}" >> "$GITHUB_OUTPUT"
-            echo "google_provider_only=${{ steps.terraform_skipped.outputs.google_provider_only }}" >> "$GITHUB_OUTPUT"
-            echo "google_identity_provider_name=${{ steps.terraform_skipped.outputs.google_identity_provider_name }}" >> "$GITHUB_OUTPUT"
             echo "supported_identity_providers=${{ steps.terraform_skipped.outputs.supported_identity_providers }}" >> "$GITHUB_OUTPUT"
             echo "self_registration_enabled=${{ steps.terraform_skipped.outputs.self_registration_enabled }}" >> "$GITHUB_OUTPUT"
           fi
@@ -534,9 +482,6 @@ runs:
           echo "managed_login_version=planned" >> "$GITHUB_OUTPUT"
           echo "managed_login_branding_id=planned" >> "$GITHUB_OUTPUT"
           echo "hosted_ui_url=planned" >> "$GITHUB_OUTPUT"
-          echo "google_identity_provider_enabled=planned" >> "$GITHUB_OUTPUT"
-          echo "google_provider_only=planned" >> "$GITHUB_OUTPUT"
-          echo "google_identity_provider_name=planned" >> "$GITHUB_OUTPUT"
           echo "supported_identity_providers=planned" >> "$GITHUB_OUTPUT"
           echo "self_registration_enabled=planned" >> "$GITHUB_OUTPUT"
         fi
