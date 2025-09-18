@@ -254,6 +254,14 @@ resource "awscc_cognito_managed_login_branding" "this" {
   # Add branding assets from provided asset paths
   assets = local.branding_assets
 
+  # Lifecycle management: Replace resource when client changes
+  # This is necessary because ClientId is a createOnlyProperty
+  lifecycle {
+    replace_triggered_by = [
+      aws_cognito_user_pool_client.this
+    ]
+  }
+
   # Ensure domain is created first to enable managed login
   depends_on = [aws_cognito_user_pool_domain.this]
 }
