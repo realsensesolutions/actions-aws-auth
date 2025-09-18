@@ -38,4 +38,3 @@ jobs:
           favicon_asset_path: "assets/favicon.ico"
           admin_user: "true"
           admin_email: henry@realsensesolutions.com
-        
