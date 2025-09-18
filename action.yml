@@ -29,20 +29,16 @@ inputs:
     description: 'Login form horizontal position: START, CENTER, or END (only works when enable_managed_login_branding is true)'
     required: false
     default: 'CENTER'
-  enable_google_identity_provider:
-    description: 'Enable Google identity provider for Cognito User Pool'
+  providers:
+    description: 'List of identity providers to enable (e.g., "google", "cognito", or "google\ncognito")'
     required: false
-    default: 'false'
-  google_provider_only:
-    description: 'When Google identity provider is enabled, use only Google provider (true) or both Google and Cognito (false)'
-    required: false
-    default: 'false'
+    default: 'cognito'
   google_client_id:
-    description: 'Google OAuth 2.0 client ID (required when enable_google_identity_provider is true)'
+    description: 'Google OAuth 2.0 client ID (required when providers includes "google")'
     required: false
     default: ''
   google_client_secret:
-    description: 'Google OAuth 2.0 client secret (required when enable_google_identity_provider is true)'
+    description: 'Google OAuth 2.0 client secret (required when providers includes "google")'
     required: false
     default: ''
   background_asset_path:
@@ -142,8 +138,7 @@ runs:
         TF_VAR_logout_urls: ${{ inputs.logout_urls }}
         TF_VAR_enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}
         TF_VAR_login_position: ${{ inputs.login_position }}
-        TF_VAR_enable_google_identity_provider: ${{ inputs.enable_google_identity_provider }}
-        TF_VAR_google_provider_only: ${{ inputs.google_provider_only }}
+        TF_VAR_providers: ${{ inputs.providers }}
         TF_VAR_google_client_id: ${{ inputs.google_client_id }}
         TF_VAR_google_client_secret: ${{ inputs.google_client_secret }}
         TF_VAR_background_asset_path: ${{ inputs.background_asset_path && format('{0}/{1}', github.workspace, inputs.background_asset_path) || '' }}
@@ -163,8 +158,7 @@ runs:
         TF_VAR_logout_urls: ${{ inputs.logout_urls }}
         TF_VAR_enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}
         TF_VAR_login_position: ${{ inputs.login_position }}
-        TF_VAR_enable_google_identity_provider: ${{ inputs.enable_google_identity_provider }}
-        TF_VAR_google_provider_only: ${{ inputs.google_provider_only }}
+        TF_VAR_providers: ${{ inputs.providers }}
         TF_VAR_google_client_id: ${{ inputs.google_client_id }}
         TF_VAR_google_client_secret: ${{ inputs.google_client_secret }}
         TF_VAR_background_asset_path: ${{ inputs.background_asset_path && format('{0}/{1}', github.workspace, inputs.background_asset_path) || '' }}
@@ -194,8 +188,7 @@ runs:
         TF_VAR_logout_urls: ${{ inputs.logout_urls }}
         TF_VAR_enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}
         TF_VAR_login_position: ${{ inputs.login_position }}
-        TF_VAR_enable_google_identity_provider: ${{ inputs.enable_google_identity_provider }}
-        TF_VAR_google_provider_only: ${{ inputs.google_provider_only }}
+        TF_VAR_providers: ${{ inputs.providers }}
         TF_VAR_google_client_id: ${{ inputs.google_client_id }}
         TF_VAR_google_client_secret: ${{ inputs.google_client_secret }}
         TF_VAR_background_asset_path: ${{ inputs.background_asset_path && format('{0}/{1}', github.workspace, inputs.background_asset_path) || '' }}
@@ -209,7 +202,7 @@ runs:
       run: |
         echo "Debug: Current configuration:"
         echo "  enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}"
-        echo "  enable_google_identity_provider: ${{ inputs.enable_google_identity_provider }}"
+        echo "  providers: ${{ inputs.providers }}"
         echo "  background_asset_path: '${{ inputs.background_asset_path }}'"
         echo "  logo_asset_path: '${{ inputs.logo_asset_path }}'"
         echo "  favicon_asset_path: '${{ inputs.favicon_asset_path }}'"
@@ -346,7 +339,8 @@ runs:
           echo "Warning: google_provider_only output not found in state, setting to false"
           GOOGLE_PROVIDER_ONLY="false"
         fi
-        if [ "${{ inputs.enable_google_identity_provider }}" == "true" ]; then
+        # Check if google provider is enabled
+        if echo "${{ inputs.providers }}" | grep -i "google" > /dev/null; then
           GOOGLE_IDENTITY_PROVIDER_NAME=$(terraform output -raw google_identity_provider_name | tr -d '\r\n')
         else
           GOOGLE_IDENTITY_PROVIDER_NAME=""
@@ -377,8 +371,7 @@ runs:
         TF_VAR_logout_urls: ${{ inputs.logout_urls }}
         TF_VAR_enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}
         TF_VAR_login_position: ${{ inputs.login_position }}
-        TF_VAR_enable_google_identity_provider: ${{ inputs.enable_google_identity_provider }}
-        TF_VAR_google_provider_only: ${{ inputs.google_provider_only }}
+        TF_VAR_providers: ${{ inputs.providers }}
         TF_VAR_google_client_id: ${{ inputs.google_client_id }}
         TF_VAR_google_client_secret: ${{ inputs.google_client_secret }}
         TF_VAR_background_asset_path: ${{ inputs.background_asset_path && format('{0}/{1}', github.workspace, inputs.background_asset_path) || '' }}
@@ -422,7 +415,8 @@ runs:
           echo "Warning: google_provider_only output not found in state, setting to false"
           GOOGLE_PROVIDER_ONLY="false"
         fi
-        if [ "${{ inputs.enable_google_identity_provider }}" == "true" ]; then
+        # Check if google provider is enabled
+        if echo "${{ inputs.providers }}" | grep -i "google" > /dev/null; then
           GOOGLE_IDENTITY_PROVIDER_NAME=$(terraform output -raw google_identity_provider_name | tr -d '\r\n')
         else
           GOOGLE_IDENTITY_PROVIDER_NAME=""
@@ -453,8 +447,7 @@ runs:
         TF_VAR_logout_urls: ${{ inputs.logout_urls }}
         TF_VAR_enable_managed_login_branding: ${{ inputs.enable_managed_login_branding }}
         TF_VAR_login_position: ${{ inputs.login_position }}
-        TF_VAR_enable_google_identity_provider: ${{ inputs.enable_google_identity_provider }}
-        TF_VAR_google_provider_only: ${{ inputs.google_provider_only }}
+        TF_VAR_providers: ${{ inputs.providers }}
         TF_VAR_google_client_id: ${{ inputs.google_client_id }}
         TF_VAR_google_client_secret: ${{ inputs.google_client_secret }}
         TF_VAR_background_asset_path: ${{ inputs.background_asset_path && format('{0}/{1}', github.workspace, inputs.background_asset_path) || '' }}

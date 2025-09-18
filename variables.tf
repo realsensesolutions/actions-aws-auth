@@ -55,35 +55,32 @@ variable "favicon_asset_path" {
   default     = ""
 }
 
-variable "enable_google_identity_provider" {
-  description = "Enable Google identity provider for Cognito User Pool"
-  type        = bool
-  default     = false
+variable "providers" {
+  description = "List of identity providers to enable (space or newline separated). Supported values: 'google', 'cognito'"
+  type        = string
+  default     = "cognito"
+  
+  validation {
+    condition = alltrue([
+      for provider in split("\n", replace(var.providers, " ", "\n")) :
+      contains(["google", "cognito", ""], lower(trimspace(provider)))
+    ])
+    error_message = "Providers must be one or more of: 'google', 'cognito' (case insensitive)."
+  }
 }
 
 variable "google_client_id" {
-  description = "Google OAuth 2.0 client ID (required when enable_google_identity_provider is true)"
+  description = "Google OAuth 2.0 client ID (required when providers includes 'google')"
   type        = string
   default     = ""
   sensitive   = true
 }
 
 variable "google_client_secret" {
-  description = "Google OAuth 2.0 client secret (required when enable_google_identity_provider is true)"
+  description = "Google OAuth 2.0 client secret (required when providers includes 'google')"
   type        = string
   default     = ""
   sensitive   = true
-}
-
-variable "google_provider_only" {
-  description = "When Google identity provider is enabled, use only Google provider (true) or both Google and Cognito (false)"
-  type        = bool
-  default     = false
-
-  validation {
-    condition     = !var.google_provider_only || (var.google_provider_only && var.enable_google_identity_provider)
-    error_message = "google_provider_only can only be true when enable_google_identity_provider is also true."
-  }
 }
 
 variable "admin_user" {

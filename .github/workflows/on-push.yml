@@ -29,8 +29,9 @@ jobs:
           logout_urls: "https://example.com"
           enable_managed_login_branding: "true"
           login_position: "CENTER"
-          enable_google_identity_provider: "true"
-          google_provider_only: "true"
+          providers: |
+            google
+            cognito
           google_client_id: ${{ secrets.GOOGLE_CLIENT_ID }}
           google_client_secret: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           background_asset_path: "assets/background.png"

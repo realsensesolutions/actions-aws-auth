@@ -57,17 +57,17 @@ output "hosted_ui_url" {
 
 output "google_identity_provider_enabled" {
   description = "Whether Google identity provider is enabled"
-  value       = var.enable_google_identity_provider
+  value       = local.enable_google
 }
 
 output "google_provider_only" {
   description = "Whether only Google provider is used (excludes Cognito native auth)"
-  value       = var.google_provider_only
+  value       = local.enable_google && !local.enable_cognito
 }
 
 output "google_identity_provider_name" {
   description = "Name of the Google identity provider (if enabled)"
-  value       = var.enable_google_identity_provider ? aws_cognito_identity_provider.google[0].provider_name : null
+  value       = local.enable_google ? aws_cognito_identity_provider.google[0].provider_name : null
 }
 
 output "supported_identity_providers" {

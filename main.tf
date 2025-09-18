@@ -6,9 +6,20 @@ resource "random_id" "suffix" {
   byte_length = 4
 }
 
-# Validate Google provider configuration
+# Parse providers and validate configuration
 locals {
-  validate_google_config = var.enable_google_identity_provider && (var.google_client_id == "" || var.google_client_secret == "") ? tobool("Google identity provider is enabled but client_id or client_secret is missing") : true
+  # Parse providers list (normalize case and remove empty values)
+  providers_list = [
+    for provider in split("\n", replace(var.providers, " ", "\n")) :
+    lower(trimspace(provider)) if trimspace(provider) != ""
+  ]
+  
+  # Check which providers are enabled
+  enable_google = contains(local.providers_list, "google")
+  enable_cognito = contains(local.providers_list, "cognito")
+  
+  # Validate Google configuration
+  validate_google_config = local.enable_google && (var.google_client_id == "" || var.google_client_secret == "") ? tobool("Google identity provider is enabled but client_id or client_secret is missing") : true
 }
 
 # Discover image files in assets directories
@@ -163,7 +174,7 @@ resource "aws_cognito_user_pool" "this" {
 
 # Create Google Identity Provider (only if enabled)
 resource "aws_cognito_identity_provider" "google" {
-  count = var.enable_google_identity_provider ? 1 : 0
+  count = local.enable_google ? 1 : 0
 
   user_pool_id  = aws_cognito_user_pool.this.id
   provider_name = "Google"
@@ -211,10 +222,10 @@ resource "aws_cognito_user_pool_client" "this" {
   callback_urls = local.callback_urls
   logout_urls   = local.logout_urls
 
-  # Supported identity providers - dynamic based on Google configuration
-  supported_identity_providers = var.enable_google_identity_provider ? (
-    var.google_provider_only ? ["Google"] : ["COGNITO", "Google"]
-  ) : ["COGNITO"]
+  # Supported identity providers - dynamic based on providers configuration
+  supported_identity_providers = local.enable_google && local.enable_cognito ? ["COGNITO", "Google"] : (
+    local.enable_google ? ["Google"] : ["COGNITO"]
+  )
 
   # Token validity
   access_token_validity  = 1
