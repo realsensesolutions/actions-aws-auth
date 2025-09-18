@@ -292,9 +292,53 @@ runs:
             core.setOutput('terraform_changed', 'true');
           }
 
+    - name: Check if action inputs or workflow configuration changed
+      id: check_input_config
+      if: inputs.action == 'apply'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          console.log('Checking for changes in action inputs or workflow configuration');
+          
+          try {
+            const { data: comparison } = await github.rest.repos.compareCommits({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              base: context.payload.before,
+              head: context.payload.after
+            });
+            
+            const changedFiles = comparison.files?.map(file => file.filename) || [];
+            console.log('Changed files in this push:', changedFiles);
+            
+            // Check for action.yml changes (input definitions, defaults, etc.)
+            // Check for workflow files that might use this action with different parameters
+            const configFiles = [
+              'action.yml', 
+              '.github/workflows/',
+              'config/branding-settings.json.tftpl'
+            ];
+            
+            const configChanged = changedFiles.some(file => {
+              return configFiles.some(pattern => {
+                if (pattern.endsWith('/')) {
+                  return file.startsWith(pattern);
+                } else {
+                  return file === pattern;
+                }
+              });
+            });
+            
+            console.log('Action inputs or workflow configuration changed:', configChanged);
+            core.setOutput('input_config_changed', configChanged.toString());
+          } catch (error) {
+            console.log('Error checking input/workflow file changes, defaulting to true:', error.message);
+            core.setOutput('input_config_changed', 'true');
+          }
+
     - name: Check if infrastructure exists (for optimization)
       id: check_infrastructure
-      if: inputs.action == 'apply' && inputs.enable_managed_login_branding == 'true' && steps.check_assets.outputs.assets_changed != 'true' && steps.check_terraform_config.outputs.terraform_changed != 'true'
+      if: inputs.action == 'apply' && inputs.enable_managed_login_branding == 'true' && steps.check_assets.outputs.assets_changed != 'true' && steps.check_terraform_config.outputs.terraform_changed != 'true' && steps.check_input_config.outputs.input_config_changed != 'true'
       run: |
         # Check if Terraform state exists and contains required resources
         if terraform state list 2>/dev/null | grep -q "aws_cognito_user_pool.this"; then
@@ -335,7 +379,7 @@ runs:
 
     - name: Terraform apply
       id: terraform
-      if: inputs.action == 'apply' && (inputs.enable_managed_login_branding != 'true' || steps.check_assets.outputs.assets_changed == 'true' || steps.check_infrastructure.outputs.infrastructure_exists == 'false' || steps.check_terraform_config.outputs.terraform_changed == 'true')
+      if: inputs.action == 'apply' && (inputs.enable_managed_login_branding != 'true' || steps.check_assets.outputs.assets_changed == 'true' || steps.check_infrastructure.outputs.infrastructure_exists == 'false' || steps.check_terraform_config.outputs.terraform_changed == 'true' || steps.check_input_config.outputs.input_config_changed == 'true')
       run: |
         # Force recreation of managed login branding only if assets have changed
         if [ "${{ inputs.enable_managed_login_branding }}" == "true" ]; then
@@ -423,16 +467,16 @@ runs:
         TF_VAR_admin_email: ${{ inputs.admin_email }}
 
     - name: Warning when infrastructure missing but apply would be skipped
-      if: inputs.action == 'apply' && inputs.enable_managed_login_branding == 'true' && steps.check_assets.outputs.assets_changed != 'true' && steps.check_terraform_config.outputs.terraform_changed != 'true' && steps.check_infrastructure.outputs.infrastructure_exists == 'false'
+      if: inputs.action == 'apply' && inputs.enable_managed_login_branding == 'true' && steps.check_assets.outputs.assets_changed != 'true' && steps.check_terraform_config.outputs.terraform_changed != 'true' && steps.check_input_config.outputs.input_config_changed != 'true' && steps.check_infrastructure.outputs.infrastructure_exists == 'false'
       run: |
         echo "::warning::Managed login branding is enabled but infrastructure is missing or incomplete. Apply will run to create/update all required resources including managed login branding."
       shell: bash
 
     - name: Get existing outputs when apply is skipped
       id: terraform_skipped
-      if: inputs.action == 'apply' && inputs.enable_managed_login_branding == 'true' && steps.check_assets.outputs.assets_changed != 'true' && steps.check_terraform_config.outputs.terraform_changed != 'true' && steps.check_infrastructure.outputs.infrastructure_exists == 'true'
+      if: inputs.action == 'apply' && inputs.enable_managed_login_branding == 'true' && steps.check_assets.outputs.assets_changed != 'true' && steps.check_terraform_config.outputs.terraform_changed != 'true' && steps.check_input_config.outputs.input_config_changed != 'true' && steps.check_infrastructure.outputs.infrastructure_exists == 'true'
       run: |
-        echo "Terraform apply was skipped because no branding assets or Terraform configuration changed. Getting existing outputs..."
+        echo "Terraform apply was skipped because no branding assets, Terraform configuration, or input configuration changed. Getting existing outputs..."
         USER_POOL_ID=$(terraform output -raw user_pool_id | tr -d '\r\n')
         USER_POOL_ARN=$(terraform output -raw user_pool_arn | tr -d '\r\n')
         CLIENT_ID=$(terraform output -raw user_pool_client_id | tr -d '\r\n')
