@@ -339,7 +339,7 @@ runs:
 
     - name: Terraform apply
       id: terraform
-      if: inputs.action == 'apply' && (inputs.enable_managed_login_branding != 'true' || steps.check_assets.outputs.assets_changed == 'true' || steps.check_terraform_config.outputs.terraform_changed == 'true' || steps.check_input_config.outputs.input_config_changed == 'true')
+      if: inputs.action == 'apply' && (inputs.enable_managed_login_branding == 'true' || steps.check_assets.outputs.assets_changed == 'true' || steps.check_terraform_config.outputs.terraform_changed == 'true' || steps.check_input_config.outputs.input_config_changed == 'true')
       run: |
         # Force recreation of managed login branding only if assets have changed
         if [ "${{ inputs.enable_managed_login_branding }}" == "true" ]; then
