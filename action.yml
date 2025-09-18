@@ -261,44 +261,14 @@ runs:
             core.setOutput('assets_changed', 'true');
           }
 
-    - name: Check if Terraform configuration files changed
-      id: check_terraform_config
-      if: inputs.action == 'apply'
-      uses: actions/github-script@v7
-      with:
-        script: |
-          console.log('Checking for changes in Terraform configuration files');
-          
-          try {
-            const { data: comparison } = await github.rest.repos.compareCommits({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              base: context.payload.before,
-              head: context.payload.after
-            });
-            
-            const changedFiles = comparison.files?.map(file => file.filename) || [];
-            console.log('Changed files in this push:', changedFiles);
-            
-            const terraformFiles = ['main.tf', 'variables.tf', 'outputs.tf', 'required_providers.tf'];
-            const terraformChanged = terraformFiles.some(tfFile => 
-              changedFiles.includes(tfFile)
-            );
-            
-            console.log('Terraform configuration files changed:', terraformChanged);
-            core.setOutput('terraform_changed', terraformChanged.toString());
-          } catch (error) {
-            console.log('Error checking terraform file changes, defaulting to true:', error.message);
-            core.setOutput('terraform_changed', 'true');
-          }
 
-    - name: Check if action inputs or workflow configuration changed
+    - name: Check if workflow configuration changed
       id: check_input_config
       if: inputs.action == 'apply'
       uses: actions/github-script@v7
       with:
         script: |
-          console.log('Checking for changes in action inputs or workflow configuration');
+          console.log('Checking for changes in workflow configuration');
           
           try {
             const { data: comparison } = await github.rest.repos.compareCommits({
@@ -311,51 +281,38 @@ runs:
             const changedFiles = comparison.files?.map(file => file.filename) || [];
             console.log('Changed files in this push:', changedFiles);
             
-            // Check for action.yml changes (input definitions, defaults, etc.)
             // Check for workflow files that might use this action with different parameters
-            const configFiles = [
-              'action.yml', 
-              '.github/workflows/',
-              'config/branding-settings.json.tftpl'
-            ];
-            
-            const configChanged = changedFiles.some(file => {
-              return configFiles.some(pattern => {
-                if (pattern.endsWith('/')) {
-                  return file.startsWith(pattern);
-                } else {
-                  return file === pattern;
-                }
-              });
+            const workflowChanged = changedFiles.some(file => {
+              return file.startsWith('.github/workflows/');
             });
             
-            console.log('Action inputs or workflow configuration changed:', configChanged);
-            core.setOutput('input_config_changed', configChanged.toString());
+            console.log('Workflow configuration changed:', workflowChanged);
+            core.setOutput('input_config_changed', workflowChanged.toString());
           } catch (error) {
-            console.log('Error checking input/workflow file changes, defaulting to true:', error.message);
+            console.log('Error checking workflow file changes, defaulting to true:', error.message);
             core.setOutput('input_config_changed', 'true');
           }
 
 
     - name: Terraform apply
       id: terraform
-      if: inputs.action == 'apply' && (inputs.enable_managed_login_branding != 'true' || steps.check_assets.outputs.assets_changed == 'true' || steps.check_terraform_config.outputs.terraform_changed == 'true' || steps.check_input_config.outputs.input_config_changed == 'true')
+      if: inputs.action == 'apply' && (inputs.enable_managed_login_branding != 'true' || steps.check_assets.outputs.assets_changed == 'true' || steps.check_input_config.outputs.input_config_changed == 'true')
       run: |
-        # Force recreation of managed login branding if assets or input config have changed
+        # Force recreation of managed login branding if assets or workflow config have changed
         if [ "${{ inputs.enable_managed_login_branding }}" == "true" ]; then
           if [ "${{ steps.check_assets.outputs.assets_changed }}" == "true" ] || [ "${{ steps.check_input_config.outputs.input_config_changed }}" == "true" ]; then
             if terraform state list | grep -q "awscc_cognito_managed_login_branding.this"; then
               if [ "${{ steps.check_assets.outputs.assets_changed }}" == "true" ]; then
                 echo "Asset files have changed. Tainting managed login branding resource to force recreation..."
               else
-                echo "Input configuration has changed. Tainting managed login branding resource to force recreation..."
+                echo "Workflow configuration has changed. Tainting managed login branding resource to force recreation..."
               fi
               terraform taint 'awscc_cognito_managed_login_branding.this[0]' || true
             else
               echo "Managed login branding resource not found in state, will be created fresh"
             fi
           else
-            echo "No asset files or input configuration have changed. Skipping taint of managed login branding resource."
+            echo "No asset files or workflow configuration have changed. Skipping taint of managed login branding resource."
           fi
         fi
         
@@ -433,9 +390,9 @@ runs:
 
     - name: Get existing outputs when apply is skipped
       id: terraform_skipped
-      if: inputs.action == 'apply' && inputs.enable_managed_login_branding == 'true' && steps.check_assets.outputs.assets_changed != 'true' && steps.check_terraform_config.outputs.terraform_changed != 'true' && steps.check_input_config.outputs.input_config_changed != 'true'
+      if: inputs.action == 'apply' && inputs.enable_managed_login_branding == 'true' && steps.check_assets.outputs.assets_changed != 'true' && steps.check_input_config.outputs.input_config_changed != 'true'
       run: |
-        echo "Terraform apply was skipped because no branding assets, Terraform configuration, or input configuration changed. Getting existing outputs..."
+        echo "Terraform apply was skipped because no branding assets or workflow configuration changed. Getting existing outputs..."
         USER_POOL_ID=$(terraform output -raw user_pool_id | tr -d '\r\n')
         USER_POOL_ARN=$(terraform output -raw user_pool_arn | tr -d '\r\n')
         CLIENT_ID=$(terraform output -raw user_pool_client_id | tr -d '\r\n')
