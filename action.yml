@@ -56,7 +56,7 @@ inputs:
   self_registration:
     description: 'Allow users to sign themselves up (true) or require admin to create users (false)'
     required: false
-    default: 'true'
+    default: 'false'
   admin_email:
     description: 'Email address for the admin user (if provided, admin user will be created)'
     required: false

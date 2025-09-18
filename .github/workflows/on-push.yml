@@ -37,5 +37,5 @@ jobs:
           background_asset_path: "assets/background.png"
           logo_asset_path: "assets/logo.png"
           favicon_asset_path: "assets/favicon.ico"
-          self_registration: "true"
+          self_registration: "false"
           admin_email: henry@realsensesolutions.com
