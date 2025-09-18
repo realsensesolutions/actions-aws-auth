@@ -55,29 +55,29 @@ variable "favicon_asset_path" {
   default     = ""
 }
 
-variable "providers" {
+variable "idp" {
   description = "List of identity providers to enable (space or newline separated). Supported values: 'google', 'cognito'"
   type        = string
   default     = "cognito"
   
   validation {
     condition = alltrue([
-      for provider in split("\n", replace(var.providers, " ", "\n")) :
+      for provider in split("\n", replace(var.idp, " ", "\n")) :
       contains(["google", "cognito", ""], lower(trimspace(provider)))
     ])
-    error_message = "Providers must be one or more of: 'google', 'cognito' (case insensitive)."
+    error_message = "Identity providers must be one or more of: 'google', 'cognito' (case insensitive)."
   }
 }
 
 variable "google_client_id" {
-  description = "Google OAuth 2.0 client ID (required when providers includes 'google')"
+  description = "Google OAuth 2.0 client ID (required when idp includes 'google')"
   type        = string
   default     = ""
   sensitive   = true
 }
 
 variable "google_client_secret" {
-  description = "Google OAuth 2.0 client secret (required when providers includes 'google')"
+  description = "Google OAuth 2.0 client secret (required when idp includes 'google')"
   type        = string
   default     = ""
   sensitive   = true

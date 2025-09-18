@@ -29,7 +29,7 @@ jobs:
           logout_urls: "https://example.com"
           enable_managed_login_branding: "true"
           login_position: "CENTER"
-          providers: |
+          idp: |
             google
             cognito
           google_client_id: ${{ secrets.GOOGLE_CLIENT_ID }}

@@ -8,9 +8,9 @@ resource "random_id" "suffix" {
 
 # Parse providers and validate configuration
 locals {
-  # Parse providers list (normalize case and remove empty values)
+  # Parse identity providers list (normalize case and remove empty values)
   providers_list = [
-    for provider in split("\n", replace(var.providers, " ", "\n")) :
+    for provider in split("\n", replace(var.idp, " ", "\n")) :
     lower(trimspace(provider)) if trimspace(provider) != ""
   ]
   
@@ -222,7 +222,7 @@ resource "aws_cognito_user_pool_client" "this" {
   callback_urls = local.callback_urls
   logout_urls   = local.logout_urls
 
-  # Supported identity providers - dynamic based on providers configuration
+  # Supported identity providers - dynamic based on idp configuration
   supported_identity_providers = local.enable_google && local.enable_cognito ? ["COGNITO", "Google"] : (
     local.enable_google ? ["Google"] : ["COGNITO"]
   )
