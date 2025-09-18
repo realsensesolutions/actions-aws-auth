@@ -18,8 +18,6 @@ locals {
   enable_google = contains(local.providers_list, "google")
   enable_cognito = contains(local.providers_list, "cognito")
   
-  # Validate Google configuration
-  validate_google_config = local.enable_google && (var.google_client_id == "" || var.google_client_secret == "") ? tobool("Google identity provider is enabled but client_id or client_secret is missing") : true
 }
 
 # Discover image files in assets directories
@@ -33,13 +31,6 @@ locals {
   branding_settings_json = var.enable_managed_login_branding ? templatefile("${path.module}/config/branding-settings.json.tftpl", {
     horizontal_position = var.login_position
   }) : null
-  
-  # Supported image extensions by asset type
-  supported_extensions = {
-    "background" = ["png", "jpg", "jpeg", "svg"]
-    "favicon"    = ["ico", "png"]
-    "logo"       = ["png", "jpg", "jpeg", "svg"]
-  }
   
   # Helper function to extract and normalize file extension
   get_file_extension = {

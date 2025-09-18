@@ -34,7 +34,7 @@ jobs:
             cognito
           google_client_id: ${{ secrets.GOOGLE_CLIENT_ID }}
           google_client_secret: ${{ secrets.GOOGLE_CLIENT_SECRET }}
-          background_asset_path: "assets/background.png"
-          logo_asset_path: "assets/logo.png"
-          favicon_asset_path: "assets/favicon.ico"
+          # background_asset_path: "assets/background.png"
+          # logo_asset_path: "assets/logo.png"
+          # favicon_asset_path: "assets/favicon.ico"
           admin_email: henry@realsensesolutions.com
