@@ -277,4 +277,3 @@ resource "aws_cognito_user" "admin" {
   
   depends_on = [aws_cognito_user_pool.this]
 }
-
