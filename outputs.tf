@@ -55,6 +55,15 @@ output "hosted_ui_url" {
   value       = "https://${aws_cognito_user_pool_domain.this.domain}.auth.${data.aws_region.current.name}.amazoncognito.com/login?client_id=${aws_cognito_user_pool_client.this.id}&response_type=code&scope=email+openid+profile&redirect_uri=${urlencode(local.callback_urls[0])}"
 }
 
+output "google_identity_provider_enabled" {
+  description = "Whether Google identity provider is enabled"
+  value       = var.enable_google_identity_provider
+}
+
+output "google_identity_provider_name" {
+  description = "Name of the Google identity provider (if enabled)"
+  value       = var.enable_google_identity_provider ? aws_cognito_identity_provider.google[0].provider_name : null
+}
 
 output "supported_identity_providers" {
   description = "List of supported identity providers (comma-separated)"
@@ -73,5 +82,5 @@ output "admin_user_created" {
 
 output "admin_username" {
   description = "Username of the admin user (if created)"
-  value       = var.admin_email != "" ? "admin" : null
+  value       = var.admin_email != "" ? aws_cognito_user.admin[0].username : null
 }
