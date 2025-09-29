@@ -57,12 +57,12 @@ output "hosted_ui_url" {
 
 output "google_identity_provider_enabled" {
   description = "Whether Google identity provider is enabled"
-  value       = var.enable_google_identity_provider
+  value       = contains([for provider in split("\n", replace(var.idp, " ", "\n")) : lower(trimspace(provider)) if trimspace(provider) != ""], "google")
 }
 
 output "google_identity_provider_name" {
   description = "Name of the Google identity provider (if enabled)"
-  value       = var.enable_google_identity_provider ? aws_cognito_identity_provider.google[0].provider_name : null
+  value       = contains([for provider in split("\n", replace(var.idp, " ", "\n")) : lower(trimspace(provider)) if trimspace(provider) != ""], "google") ? aws_cognito_identity_provider.google[0].provider_name : null
 }
 
 output "supported_identity_providers" {
