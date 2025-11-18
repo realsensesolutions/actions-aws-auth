@@ -80,6 +80,11 @@ resource "aws_cognito_user_pool" "this" {
   # Email verification configuration
   auto_verified_attributes = ["email"]
 
+  # Username configuration
+  username_configuration {
+    case_sensitive = var.case_sensitive
+  }
+
   # Self-registration configuration
   admin_create_user_config {
     allow_admin_create_user_only = !var.self_registration

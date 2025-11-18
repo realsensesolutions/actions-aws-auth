@@ -61,6 +61,10 @@ inputs:
     description: 'Email address for the admin user (if provided, admin user will be created)'
     required: false
     default: ''
+  case_sensitive:
+    description: 'Whether usernames are case sensitive (true) or case insensitive (false). Default is false (case insensitive)'
+    required: false
+    default: 'false'
 
 outputs:
   user_pool_id:
@@ -137,6 +141,7 @@ runs:
         TF_VAR_logo_asset_path: ${{ inputs.logo_asset_path && format('{0}/{1}', github.workspace, inputs.logo_asset_path) || '' }}
         TF_VAR_favicon_asset_path: ${{ inputs.favicon_asset_path && format('{0}/{1}', github.workspace, inputs.favicon_asset_path) || '' }}
         TF_VAR_admin_email: ${{ inputs.admin_email }}
+        TF_VAR_case_sensitive: ${{ inputs.case_sensitive }}
 
     - name: Terraform plan
       if: inputs.action == 'plan'
@@ -157,6 +162,7 @@ runs:
         TF_VAR_logo_asset_path: ${{ inputs.logo_asset_path && format('{0}/{1}', github.workspace, inputs.logo_asset_path) || '' }}
         TF_VAR_favicon_asset_path: ${{ inputs.favicon_asset_path && format('{0}/{1}', github.workspace, inputs.favicon_asset_path) || '' }}
         TF_VAR_admin_email: ${{ inputs.admin_email }}
+        TF_VAR_case_sensitive: ${{ inputs.case_sensitive }}
 
     - name: Terraform init and destroy
       if: inputs.action == 'destroy'
@@ -187,6 +193,7 @@ runs:
         TF_VAR_logo_asset_path: ${{ inputs.logo_asset_path && format('{0}/{1}', github.workspace, inputs.logo_asset_path) || '' }}
         TF_VAR_favicon_asset_path: ${{ inputs.favicon_asset_path && format('{0}/{1}', github.workspace, inputs.favicon_asset_path) || '' }}
         TF_VAR_admin_email: ${{ inputs.admin_email }}
+        TF_VAR_case_sensitive: ${{ inputs.case_sensitive }}
 
     - name: Debug step - Show current configuration
       if: inputs.action == 'apply'
@@ -355,6 +362,7 @@ runs:
         TF_VAR_logo_asset_path: ${{ inputs.logo_asset_path && format('{0}/{1}', github.workspace, inputs.logo_asset_path) || '' }}
         TF_VAR_favicon_asset_path: ${{ inputs.favicon_asset_path && format('{0}/{1}', github.workspace, inputs.favicon_asset_path) || '' }}
         TF_VAR_admin_email: ${{ inputs.admin_email }}
+        TF_VAR_case_sensitive: ${{ inputs.case_sensitive }}
 
 
     - name: Get existing outputs when apply is skipped
@@ -416,6 +424,7 @@ runs:
         TF_VAR_logo_asset_path: ${{ inputs.logo_asset_path && format('{0}/{1}', github.workspace, inputs.logo_asset_path) || '' }}
         TF_VAR_favicon_asset_path: ${{ inputs.favicon_asset_path && format('{0}/{1}', github.workspace, inputs.favicon_asset_path) || '' }}
         TF_VAR_admin_email: ${{ inputs.admin_email }}
+        TF_VAR_case_sensitive: ${{ inputs.case_sensitive }}
 
     - name: Set final outputs
       id: outputs

@@ -99,3 +99,9 @@ variable "admin_email" {
     error_message = "admin_email must be a valid email address or empty."
   }
 }
+
+variable "case_sensitive" {
+  description = "Whether usernames are case sensitive (true) or case insensitive (false). Default is false (case insensitive)"
+  type        = bool
+  default     = false
+}
