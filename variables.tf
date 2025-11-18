@@ -101,7 +101,7 @@ variable "admin_email" {
 }
 
 variable "case_sensitive" {
-  description = "Whether usernames are case sensitive (true) or case insensitive (false). Default is false (case insensitive)"
+  description = "Whether usernames are case sensitive (true) or case insensitive (false). Default is true (case sensitive)"
   type        = bool
-  default     = false
+  default     = true
 }

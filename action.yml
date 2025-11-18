@@ -62,9 +62,9 @@ inputs:
     required: false
     default: ''
   case_sensitive:
-    description: 'Whether usernames are case sensitive (true) or case insensitive (false). Default is false (case insensitive)'
+    description: 'Whether usernames are case sensitive (true) or case insensitive (false). Default is true (case sensitive)'
     required: false
-    default: 'false'
+    default: 'true'
 
 outputs:
   user_pool_id:
