@@ -23,7 +23,7 @@ locals {
 # Discover image files in assets directories
 locals {
   user_pool_name = var.name
-  sanitized_user_pool_name = lower(regexreplace(var.name, "[^0-9A-Za-z-_]", "-"))
+  sanitized_user_pool_name = lower(join("-", regexall("[0-9A-Za-z_-]+", var.name)))
   # Parse comma-separated URLs into lists
   callback_urls = split(",", var.callback_urls)
   logout_urls   = split(",", var.logout_urls)
