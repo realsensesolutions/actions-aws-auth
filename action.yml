@@ -21,6 +21,10 @@ inputs:
     description: 'Comma-separated list of logout URLs for OAuth'
     required: false
     default: 'https://example.com'
+  allowed_domains:
+    description: 'Comma-separated list of allowed email domains for pre-sign-up validation (leave blank to disable)'
+    required: false
+    default: ''
   enable_managed_login_branding:
     description: 'Enable managed login branding with customizable assets (use background_asset_path, logo_asset_path, favicon_asset_path)'
     required: false
@@ -135,6 +139,7 @@ runs:
         TF_VAR_login_position: ${{ inputs.login_position }}
         TF_VAR_idp: ${{ inputs.idp }}
         TF_VAR_self_registration: ${{ inputs.self_registration }}
+        TF_VAR_allowed_domains: ${{ inputs.allowed_domains }}
         TF_VAR_google_client_id: ${{ inputs.google_client_id }}
         TF_VAR_google_client_secret: ${{ inputs.google_client_secret }}
         TF_VAR_background_asset_path: ${{ inputs.background_asset_path && format('{0}/{1}', github.workspace, inputs.background_asset_path) || '' }}
@@ -156,6 +161,7 @@ runs:
         TF_VAR_login_position: ${{ inputs.login_position }}
         TF_VAR_idp: ${{ inputs.idp }}
         TF_VAR_self_registration: ${{ inputs.self_registration }}
+        TF_VAR_allowed_domains: ${{ inputs.allowed_domains }}
         TF_VAR_google_client_id: ${{ inputs.google_client_id }}
         TF_VAR_google_client_secret: ${{ inputs.google_client_secret }}
         TF_VAR_background_asset_path: ${{ inputs.background_asset_path && format('{0}/{1}', github.workspace, inputs.background_asset_path) || '' }}
@@ -187,6 +193,7 @@ runs:
         TF_VAR_login_position: ${{ inputs.login_position }}
         TF_VAR_idp: ${{ inputs.idp }}
         TF_VAR_self_registration: ${{ inputs.self_registration }}
+        TF_VAR_allowed_domains: ${{ inputs.allowed_domains }}
         TF_VAR_google_client_id: ${{ inputs.google_client_id }}
         TF_VAR_google_client_secret: ${{ inputs.google_client_secret }}
         TF_VAR_background_asset_path: ${{ inputs.background_asset_path && format('{0}/{1}', github.workspace, inputs.background_asset_path) || '' }}
@@ -356,6 +363,7 @@ runs:
         TF_VAR_login_position: ${{ inputs.login_position }}
         TF_VAR_idp: ${{ inputs.idp }}
         TF_VAR_self_registration: ${{ inputs.self_registration }}
+        TF_VAR_allowed_domains: ${{ inputs.allowed_domains }}
         TF_VAR_google_client_id: ${{ inputs.google_client_id }}
         TF_VAR_google_client_secret: ${{ inputs.google_client_secret }}
         TF_VAR_background_asset_path: ${{ inputs.background_asset_path && format('{0}/{1}', github.workspace, inputs.background_asset_path) || '' }}
@@ -418,6 +426,7 @@ runs:
         TF_VAR_login_position: ${{ inputs.login_position }}
         TF_VAR_idp: ${{ inputs.idp }}
         TF_VAR_self_registration: ${{ inputs.self_registration }}
+        TF_VAR_allowed_domains: ${{ inputs.allowed_domains }}
         TF_VAR_google_client_id: ${{ inputs.google_client_id }}
         TF_VAR_google_client_secret: ${{ inputs.google_client_secret }}
         TF_VAR_background_asset_path: ${{ inputs.background_asset_path && format('{0}/{1}', github.workspace, inputs.background_asset_path) || '' }}

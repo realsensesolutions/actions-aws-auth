@@ -20,6 +20,12 @@ variable "logout_urls" {
   default     = "https://example.com"
 }
 
+variable "allowed_domains" {
+  description = "Comma-separated list of allowed email domains for pre-sign-up validation (leave empty to disable domain enforcement)"
+  type        = string
+  default     = ""
+}
+
 variable "enable_managed_login_branding" {
   description = "Enable managed login branding for Cognito UI customization with automatic asset discovery from assets/ directory"
   type        = bool

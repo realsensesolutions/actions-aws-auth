@@ -23,6 +23,7 @@ locals {
 # Discover image files in assets directories
 locals {
   user_pool_name = var.name
+  sanitized_user_pool_name = lower(regexreplace(var.name, "[^0-9A-Za-z-_]", "-"))
   # Parse comma-separated URLs into lists
   callback_urls = split(",", var.callback_urls)
   logout_urls   = split(",", var.logout_urls)
@@ -71,6 +72,85 @@ locals {
       } : null
     ] : asset if asset != null
   ] : []
+
+  allowed_domains_enabled = trimspace(var.allowed_domains) != ""
+}
+
+# Package allowed domains Lambda (only when domains are provided)
+data "archive_file" "allowed_domains_lambda" {
+  count      = local.allowed_domains_enabled ? 1 : 0
+  type       = "zip"
+  source_dir = "${path.module}/lambda/allowed_domains"
+  output_path = "${path.module}/.terraform/allowed-domains.zip"
+}
+
+resource "aws_iam_role" "allowed_domains_lambda" {
+  count = local.allowed_domains_enabled ? 1 : 0
+
+  name = substr("${local.sanitized_user_pool_name}-allowed-domains-${random_id.suffix.hex}", 0, 64)
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "allowed_domains_lambda_logs" {
+  count = local.allowed_domains_enabled ? 1 : 0
+
+  name = substr("${local.sanitized_user_pool_name}-allowed-domains-logs-${random_id.suffix.hex}", 0, 128)
+  role = aws_iam_role.allowed_domains_lambda[count.index].id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Resource = "arn:aws:logs:*:*:*"
+      }
+    ]
+  })
+}
+
+resource "aws_lambda_function" "allowed_domains" {
+  count = local.allowed_domains_enabled ? 1 : 0
+
+  function_name = substr("${local.sanitized_user_pool_name}-allowed-domains-${random_id.suffix.hex}", 0, 64)
+  filename         = data.archive_file.allowed_domains_lambda[count.index].output_path
+  source_code_hash = data.archive_file.allowed_domains_lambda[count.index].output_base64sha256
+  role             = aws_iam_role.allowed_domains_lambda[count.index].arn
+  handler          = "lambda_function.lambda_handler"
+  runtime          = "python3.12"
+  timeout          = 5
+
+  environment {
+    variables = {
+      ALLOWED_DOMAINS = var.allowed_domains
+    }
+  }
+}
+
+resource "aws_lambda_permission" "allow_cognito" {
+  count = local.allowed_domains_enabled ? 1 : 0
+
+  statement_id  = "AllowExecutionFromCognitoPreSignup"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.allowed_domains[count.index].function_name
+  principal     = "cognito-idp.amazonaws.com"
+  source_arn    = aws_cognito_user_pool.this.arn
 }
 
 # Create Cognito User Pool
@@ -88,6 +168,13 @@ resource "aws_cognito_user_pool" "this" {
   # Self-registration configuration
   admin_create_user_config {
     allow_admin_create_user_only = !var.self_registration
+  }
+
+  dynamic "lambda_config" {
+    for_each = local.allowed_domains_enabled ? [aws_lambda_function.allowed_domains[0].arn] : []
+    content {
+      pre_sign_up = lambda_config.value
+    }
   }
 
   # MFA configuration
