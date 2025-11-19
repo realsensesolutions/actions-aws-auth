@@ -40,3 +40,4 @@ jobs:
           self_registration: "false"
           case_sensitive: "true"
           admin_email: henry@realsensesolutions.com
+          allowed_domains: "realsensesolutions.com"
