@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - name: auth
+          - name: auth-demo
             callback_urls: "https://example.com/callback"
             logout_urls: "https://example.com"
             admin_email: "henry@realsensesolutions.com"
