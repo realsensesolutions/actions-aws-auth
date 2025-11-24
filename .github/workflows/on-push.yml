@@ -14,19 +14,44 @@ jobs:
       matrix:
         include:
           - name: auth-demo
-            callback_urls: "https://example.com/callback"
-            logout_urls: "https://example.com"
-            admin_email: "henry@realsensesolutions.com"
+            callback_urls: "https://demo.example.com/callback"
+            logout_urls: "https://demo.example.com"
+            admin_email: "demo@realsensesolutions.com"
             allowed_domains: "realsensesolutions.com"
           - name: auth-dev
             callback_urls: "https://dev.example.com/callback"
             logout_urls: "https://dev.example.com"
             admin_email: "dev@realsensesolutions.com"
             allowed_domains: "realsensesolutions.com"
+          - name: auth-test
+            callback_urls: "https://test.example.com/callback"
+            logout_urls: "https://test.example.com"
+            admin_email: "test@realsensesolutions.com"
+            allowed_domains: "realsensesolutions.com"
+          - name: auth-qa
+            callback_urls: "https://qa.example.com/callback"
+            logout_urls: "https://qa.example.com"
+            admin_email: "qa@realsensesolutions.com"
+            allowed_domains: "realsensesolutions.com"
+          - name: auth-uat
+            callback_urls: "https://uat.example.com/callback"
+            logout_urls: "https://uat.example.com"
+            admin_email: "uat@realsensesolutions.com"
+            allowed_domains: "realsensesolutions.com"
           - name: auth-staging
             callback_urls: "https://staging.example.com/callback"
             logout_urls: "https://staging.example.com"
             admin_email: "staging@realsensesolutions.com"
+            allowed_domains: "realsensesolutions.com"
+          - name: auth-sandbox
+            callback_urls: "https://sandbox.example.com/callback"
+            logout_urls: "https://sandbox.example.com"
+            admin_email: "sandbox@realsensesolutions.com"
+            allowed_domains: "realsensesolutions.com"
+          - name: auth-preview
+            callback_urls: "https://preview.example.com/callback"
+            logout_urls: "https://preview.example.com"
+            admin_email: "preview@realsensesolutions.com"
             allowed_domains: "realsensesolutions.com"
           - name: auth-prod
             callback_urls: "https://example.com/callback"
