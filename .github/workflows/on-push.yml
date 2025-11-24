@@ -10,6 +10,31 @@ jobs:
       contents: read
 
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: auth
+            callback_urls: "https://example.com/callback"
+            logout_urls: "https://example.com"
+            admin_email: "henry@realsensesolutions.com"
+            allowed_domains: "realsensesolutions.com"
+          - name: auth-dev
+            callback_urls: "https://dev.example.com/callback"
+            logout_urls: "https://dev.example.com"
+            admin_email: "dev@realsensesolutions.com"
+            allowed_domains: "realsensesolutions.com"
+          - name: auth-staging
+            callback_urls: "https://staging.example.com/callback"
+            logout_urls: "https://staging.example.com"
+            admin_email: "staging@realsensesolutions.com"
+            allowed_domains: "realsensesolutions.com"
+          - name: auth-prod
+            callback_urls: "https://example.com/callback"
+            logout_urls: "https://example.com"
+            admin_email: "henry@realsensesolutions.com"
+            allowed_domains: "realsensesolutions.com"
+      fail-fast: false
+
     steps:
       - name: Check out repo
         uses: actions/checkout@v4
@@ -24,20 +49,19 @@ jobs:
       - uses: realsensesolutions/actions-aws-auth@main
         with: 
           action: apply
-          name: auth
-          callback_urls: "https://example.com/callback"
-          logout_urls: "https://example.com"
-          enable_managed_login_branding: "false"
+          name: ${{ matrix.name }}
+          callback_urls: ${{ matrix.callback_urls }}
+          logout_urls: ${{ matrix.logout_urls }}
+          enable_managed_login_branding: "true"
           login_position: "CENTER"
           idp: |
-            google
             cognito
-          google_client_id: ${{ secrets.GOOGLE_CLIENT_ID }}
-          google_client_secret: ${{ secrets.GOOGLE_CLIENT_SECRET }}
-          # background_asset_path: "assets/background.png"
-          # logo_asset_path: "assets/logo.png"
-          # favicon_asset_path: "assets/favicon.ico"
+          # google_client_id: ${{ secrets.GOOGLE_CLIENT_ID }}
+          # google_client_secret: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          background_asset_path: "assets/background.png"
+          logo_asset_path: "assets/logo.png"
+          favicon_asset_path: "assets/favicon.ico"
           self_registration: "true"
           case_sensitive: "true"
-          admin_email: henry@realsensesolutions.com
-          allowed_domains: "realsensesolutions.com"
+          admin_email: ${{ matrix.admin_email }}
+          allowed_domains: ${{ matrix.allowed_domains }}
