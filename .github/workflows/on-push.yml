@@ -53,6 +53,11 @@ jobs:
             logout_urls: "https://preview.example.com"
             admin_email: "preview@realsensesolutions.com"
             allowed_domains: "realsensesolutions.com"
+          - name: auth-beta
+            callback_urls: "https://beta.example.com/callback"
+            logout_urls: "https://beta.example.com"
+            admin_email: "beta@realsensesolutions.com"
+            allowed_domains: "realsensesolutions.com"
           - name: auth-prod
             callback_urls: "https://example.com/callback"
             logout_urls: "https://example.com"
