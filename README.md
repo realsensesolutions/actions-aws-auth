@@ -217,6 +217,25 @@ This action provisions the following AWS resources:
 - **MFA**: Disabled by default
 - **Self-Registration**: Enabled
 
+### Custom Attributes
+
+The user pool includes the following custom attributes available in JWT tokens: `custom:tenantId`, `custom:userRole`, `custom:apiKey`, `custom:tenantTier`, and `custom:serviceProviderId`.
+
+**Go Example:**
+```go
+type CognitoClaims struct {
+    ServiceProviderID string `json:"custom:serviceProviderId"`
+    // ... other attributes
+}
+```
+
+**Note:** New user pools automatically include all attributes. Existing pools continue working safely. To add `serviceProviderId` to an existing pool, use:
+```bash
+aws cognito-idp add-custom-attributes \
+  --user-pool-id <your-pool-id> \
+  --custom-attributes '[{"Name":"serviceProviderId","AttributeDataType":"String","Mutable":true}]'
+```
+
 ## Using the Outputs
 
 ```yaml
