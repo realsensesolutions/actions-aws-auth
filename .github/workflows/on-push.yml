@@ -63,6 +63,11 @@ jobs:
             logout_urls: "https://example.com"
             admin_email: "henry@realsensesolutions.com"
             allowed_domains: "realsensesolutions.com"
+          - name: auth-test-spid
+            callback_urls: "https://test-spid.example.com/callback"
+            logout_urls: "https://test-spid.example.com"
+            admin_email: "test-spid@realsensesolutions.com"
+            allowed_domains: "realsensesolutions.com"
       fail-fast: false
 
     steps:
