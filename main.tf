@@ -241,6 +241,19 @@ resource "aws_cognito_user_pool" "this" {
     }
   }
 
+  schema {
+    name                     = "serviceProviderId"
+    attribute_data_type      = "String"
+    mutable                  = true
+    required                 = false
+    developer_only_attribute = false
+    
+    string_attribute_constraints {
+      min_length = 0
+      max_length = 2048
+    }
+  }
+
   # Password policy
   password_policy {
     minimum_length    = 8
@@ -252,6 +265,10 @@ resource "aws_cognito_user_pool" "this" {
 
   tags = {
     Name = local.user_pool_name
+  }
+
+  lifecycle {
+    ignore_changes = [schema]
   }
 }
 
