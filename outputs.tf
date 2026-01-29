@@ -84,3 +84,13 @@ output "admin_username" {
   description = "Username of the admin user (if created)"
   value       = var.admin_email != "" ? aws_cognito_user.admin[0].username : null
 }
+
+output "cognito_group_name" {
+  description = "Name of the Cognito user pool group (if permissions are provided)"
+  value       = local.permissions_enabled ? aws_cognito_user_group.this[0].name : null
+}
+
+output "cognito_group_role_arn" {
+  description = "ARN of the IAM role attached to the Cognito group (if permissions are provided)"
+  value       = local.permissions_enabled ? aws_iam_role.cognito_group_role[0].arn : null
+}

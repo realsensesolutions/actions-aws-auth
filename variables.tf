@@ -111,3 +111,9 @@ variable "case_sensitive" {
   type        = bool
   default     = true
 }
+
+variable "permissions" {
+  description = "IAM permissions for the Cognito group role in YAML format"
+  type        = string
+  default     = ""
+}

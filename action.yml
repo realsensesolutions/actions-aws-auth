@@ -1,121 +1,131 @@
-name: 'AWS Cognito Auth'
-description: 'Provision AWS Cognito User Pool for authentication using Terraform with customizable branding assets'
-author: 'alonch'
+name: "AWS Cognito Auth"
+description: "Provision AWS Cognito User Pool for authentication using Terraform with customizable branding assets"
+author: "alonch"
 branding:
-  icon: 'shield'
-  color: 'blue'
+  icon: "shield"
+  color: "blue"
 
 inputs:
   action:
-    description: 'Desired outcome: apply, plan or destroy'
+    description: "Desired outcome: apply, plan or destroy"
     required: false
-    default: 'apply'
+    default: "apply"
   name:
-    description: 'Cognito User Pool name - will be used as the Name tag'
+    description: "Cognito User Pool name - will be used as the Name tag"
     required: true
   callback_urls:
-    description: 'Comma-separated list of callback URLs for OAuth'
+    description: "Comma-separated list of callback URLs for OAuth"
     required: false
-    default: 'https://example.com/callback'
+    default: "https://example.com/callback"
   logout_urls:
-    description: 'Comma-separated list of logout URLs for OAuth'
+    description: "Comma-separated list of logout URLs for OAuth"
     required: false
-    default: 'https://example.com'
+    default: "https://example.com"
   allowed_domains:
-    description: 'Comma-separated list of allowed email domains for pre-sign-up validation (leave blank to disable)'
+    description: "Comma-separated list of allowed email domains for pre-sign-up validation (leave blank to disable)"
     required: false
-    default: ''
+    default: ""
   enable_managed_login_branding:
-    description: 'Enable managed login branding with customizable assets (use background_asset_path, logo_asset_path, favicon_asset_path)'
+    description: "Enable managed login branding with customizable assets (use background_asset_path, logo_asset_path, favicon_asset_path)"
     required: false
-    default: 'false'
+    default: "false"
   login_position:
-    description: 'Login form horizontal position: START, CENTER, or END (only works when enable_managed_login_branding is true)'
+    description: "Login form horizontal position: START, CENTER, or END (only works when enable_managed_login_branding is true)"
     required: false
-    default: 'CENTER'
+    default: "CENTER"
   idp:
     description: 'List of identity providers to enable (e.g., "google", "cognito", or "google\ncognito")'
     required: false
-    default: 'cognito'
+    default: "cognito"
   google_client_id:
     description: 'Google OAuth 2.0 client ID (required when idp includes "google")'
     required: false
-    default: ''
+    default: ""
   google_client_secret:
     description: 'Google OAuth 2.0 client secret (required when idp includes "google")'
     required: false
-    default: ''
+    default: ""
   background_asset_path:
-    description: 'Path to background image asset relative to workspace root (supported: png, jpg, jpeg, svg)'
+    description: "Path to background image asset relative to workspace root (supported: png, jpg, jpeg, svg)"
     required: false
-    default: ''
+    default: ""
   logo_asset_path:
-    description: 'Path to logo image asset relative to workspace root (supported: png, jpg, jpeg, svg)'
+    description: "Path to logo image asset relative to workspace root (supported: png, jpg, jpeg, svg)"
     required: false
-    default: ''
+    default: ""
   favicon_asset_path:
-    description: 'Path to favicon asset relative to workspace root (supported: ico, png)'
+    description: "Path to favicon asset relative to workspace root (supported: ico, png)"
     required: false
-    default: ''
+    default: ""
   self_registration:
-    description: 'Allow users to sign themselves up (true) or require admin to create users (false)'
+    description: "Allow users to sign themselves up (true) or require admin to create users (false)"
     required: false
-    default: 'false'
+    default: "false"
   admin_email:
-    description: 'Email address for the admin user (if provided, admin user will be created)'
+    description: "Email address for the admin user (if provided, admin user will be created)"
     required: false
-    default: ''
+    default: ""
   case_sensitive:
-    description: 'Whether usernames are case sensitive (true) or case insensitive (false). Default is true (case sensitive)'
+    description: "Whether usernames are case sensitive (true) or case insensitive (false). Default is true (case sensitive)"
     required: false
-    default: 'true'
+    default: "true"
+  permissions:
+    description: 'List of permissions following Github standard of service: read or write. In YML format (e.g., "s3: write\ndynamodb: read")'
+    required: false
+    default: ""
 
 outputs:
   user_pool_id:
-    description: 'ID of the Cognito User Pool'
+    description: "ID of the Cognito User Pool"
     value: ${{ steps.outputs.outputs.user_pool_id }}
   user_pool_arn:
-    description: 'ARN of the Cognito User Pool'
+    description: "ARN of the Cognito User Pool"
     value: ${{ steps.outputs.outputs.user_pool_arn }}
   client_id:
-    description: 'ID of the Cognito User Pool Client'
+    description: "ID of the Cognito User Pool Client"
     value: ${{ steps.outputs.outputs.client_id }}
   client_secret:
-    description: 'Secret of the Cognito User Pool Client'
+    description: "Secret of the Cognito User Pool Client"
     value: ${{ steps.outputs.outputs.client_secret }}
   user_pool_domain:
-    description: 'Domain of the Cognito User Pool'
+    description: "Domain of the Cognito User Pool"
     value: ${{ steps.outputs.outputs.user_pool_domain }}
   login_url:
-    description: 'Complete login URL for the Cognito Hosted UI'
+    description: "Complete login URL for the Cognito Hosted UI"
     value: ${{ steps.outputs.outputs.login_url }}
   cognito_domain:
-    description: 'Cognito provided domain URL'
+    description: "Cognito provided domain URL"
     value: ${{ steps.outputs.outputs.cognito_domain }}
   managed_login_branding_enabled:
-    description: 'Whether managed login branding is enabled'
+    description: "Whether managed login branding is enabled"
     value: ${{ steps.outputs.outputs.managed_login_branding_enabled }}
   managed_login_version:
-    description: 'Managed login version used by the domain'
+    description: "Managed login version used by the domain"
     value: ${{ steps.outputs.outputs.managed_login_version }}
   managed_login_branding_id:
-    description: 'ID of the managed login branding resource'
+    description: "ID of the managed login branding resource"
     value: ${{ steps.outputs.outputs.managed_login_branding_id }}
   hosted_ui_url:
-    description: 'Complete hosted UI URL for sign-in'
+    description: "Complete hosted UI URL for sign-in"
     value: ${{ steps.outputs.outputs.hosted_ui_url }}
   supported_identity_providers:
-    description: 'List of supported identity providers'
+    description: "List of supported identity providers"
     value: ${{ steps.outputs.outputs.supported_identity_providers }}
   self_registration_enabled:
-    description: 'Whether users can sign themselves up'
+    description: "Whether users can sign themselves up"
     value: ${{ steps.outputs.outputs.self_registration_enabled }}
   admin_user_created:
-    description: 'Whether admin user was created (true when admin_email is provided)'
+    description: "Whether admin user was created (true when admin_email is provided)"
     value: ${{ steps.outputs.outputs.admin_user_created }}
   admin_username:
-    description: 'Username of the admin user (if created)'
+    description: "Username of the admin user (if created)"
     value: ${{ steps.outputs.outputs.admin_username }}
+  cognito_group_name:
+    description: "Name of the Cognito user pool group (if permissions are provided)"
+    value: ${{ steps.outputs.outputs.cognito_group_name }}
+  cognito_group_role_arn:
+    description: "ARN of the IAM role attached to the Cognito group (if permissions are provided)"
+    value: ${{ steps.outputs.outputs.cognito_group_role_arn }}
 
 runs:
   using: "composite"
@@ -147,6 +157,7 @@ runs:
         TF_VAR_favicon_asset_path: ${{ inputs.favicon_asset_path && format('{0}/{1}', github.workspace, inputs.favicon_asset_path) || '' }}
         TF_VAR_admin_email: ${{ inputs.admin_email }}
         TF_VAR_case_sensitive: ${{ inputs.case_sensitive }}
+        TF_VAR_permissions: ${{ inputs.permissions }}
 
     - name: Terraform plan
       if: inputs.action == 'plan'
@@ -169,6 +180,7 @@ runs:
         TF_VAR_favicon_asset_path: ${{ inputs.favicon_asset_path && format('{0}/{1}', github.workspace, inputs.favicon_asset_path) || '' }}
         TF_VAR_admin_email: ${{ inputs.admin_email }}
         TF_VAR_case_sensitive: ${{ inputs.case_sensitive }}
+        TF_VAR_permissions: ${{ inputs.permissions }}
 
     - name: Terraform init and destroy
       if: inputs.action == 'destroy'
@@ -201,6 +213,7 @@ runs:
         TF_VAR_favicon_asset_path: ${{ inputs.favicon_asset_path && format('{0}/{1}', github.workspace, inputs.favicon_asset_path) || '' }}
         TF_VAR_admin_email: ${{ inputs.admin_email }}
         TF_VAR_case_sensitive: ${{ inputs.case_sensitive }}
+        TF_VAR_permissions: ${{ inputs.permissions }}
 
     - name: Debug step - Show current configuration
       if: inputs.action == 'apply'
@@ -228,15 +241,15 @@ runs:
             process.env.LOGO_ASSET_PATH,
             process.env.FAVICON_ASSET_PATH
           ].filter(path => path && path.trim() !== '');
-          
+
           if (assetPaths.length === 0) {
             console.log('No asset paths provided, skipping change detection');
             core.setOutput('assets_changed', 'false');
             return;
           }
-          
+
           console.log('Checking for changes in asset files:', assetPaths);
-          
+
           try {
             const { data: comparison } = await github.rest.repos.compareCommits({
               owner: context.repo.owner,
@@ -259,7 +272,6 @@ runs:
             core.setOutput('assets_changed', 'true');
           }
 
-
     - name: Check if workflow configuration changed
       id: check_input_config
       if: inputs.action == 'apply'
@@ -267,7 +279,7 @@ runs:
       with:
         script: |
           console.log('Checking for changes in workflow configuration');
-          
+
           try {
             const { data: comparison } = await github.rest.repos.compareCommits({
               owner: context.repo.owner,
@@ -291,7 +303,6 @@ runs:
             core.setOutput('input_config_changed', 'true');
           }
 
-
     - name: Terraform apply
       id: terraform
       if: inputs.action == 'apply' && (inputs.enable_managed_login_branding != 'true' || steps.check_assets.outputs.assets_changed == 'true' || steps.check_input_config.outputs.input_config_changed == 'true')
@@ -313,7 +324,7 @@ runs:
             echo "No asset files or workflow configuration have changed. Skipping taint of managed login branding resource."
           fi
         fi
-        
+
         terraform apply -auto-approve
         USER_POOL_ID=$(terraform output -raw user_pool_id | tr -d '\r\n')
         USER_POOL_ARN=$(terraform output -raw user_pool_arn | tr -d '\r\n')
@@ -338,6 +349,16 @@ runs:
         HOSTED_UI_URL=$(terraform output -raw hosted_ui_url | tr -d '\r\n')
         SUPPORTED_IDENTITY_PROVIDERS=$(terraform output -raw supported_identity_providers | tr -d '\r\n')
         SELF_REGISTRATION_ENABLED=$(terraform output -raw self_registration_enabled | tr -d '\r\n')
+        if terraform output cognito_group_name >/dev/null 2>&1; then
+          COGNITO_GROUP_NAME=$(terraform output -raw cognito_group_name | tr -d '\r\n')
+        else
+          COGNITO_GROUP_NAME=""
+        fi
+        if terraform output cognito_group_role_arn >/dev/null 2>&1; then
+          COGNITO_GROUP_ROLE_ARN=$(terraform output -raw cognito_group_role_arn | tr -d '\r\n')
+        else
+          COGNITO_GROUP_ROLE_ARN=""
+        fi
 
         # Set outputs temporarily
         echo "user_pool_id=$USER_POOL_ID" >> "$GITHUB_OUTPUT"
@@ -353,6 +374,8 @@ runs:
         echo "hosted_ui_url=$HOSTED_UI_URL" >> "$GITHUB_OUTPUT"
         echo "supported_identity_providers=$SUPPORTED_IDENTITY_PROVIDERS" >> "$GITHUB_OUTPUT"
         echo "self_registration_enabled=$SELF_REGISTRATION_ENABLED" >> "$GITHUB_OUTPUT"
+        echo "cognito_group_name=$COGNITO_GROUP_NAME" >> "$GITHUB_OUTPUT"
+        echo "cognito_group_role_arn=$COGNITO_GROUP_ROLE_ARN" >> "$GITHUB_OUTPUT"
       shell: bash
       working-directory: ${{ github.action_path }}
       env:
@@ -371,7 +394,7 @@ runs:
         TF_VAR_favicon_asset_path: ${{ inputs.favicon_asset_path && format('{0}/{1}', github.workspace, inputs.favicon_asset_path) || '' }}
         TF_VAR_admin_email: ${{ inputs.admin_email }}
         TF_VAR_case_sensitive: ${{ inputs.case_sensitive }}
-
+        TF_VAR_permissions: ${{ inputs.permissions }}
 
     - name: Get existing outputs when apply is skipped
       id: terraform_skipped
@@ -401,6 +424,16 @@ runs:
         HOSTED_UI_URL=$(terraform output -raw hosted_ui_url | tr -d '\r\n')
         SUPPORTED_IDENTITY_PROVIDERS=$(terraform output -raw supported_identity_providers | tr -d '\r\n')
         SELF_REGISTRATION_ENABLED=$(terraform output -raw self_registration_enabled | tr -d '\r\n')
+        if terraform output cognito_group_name >/dev/null 2>&1; then
+          COGNITO_GROUP_NAME=$(terraform output -raw cognito_group_name | tr -d '\r\n')
+        else
+          COGNITO_GROUP_NAME=""
+        fi
+        if terraform output cognito_group_role_arn >/dev/null 2>&1; then
+          COGNITO_GROUP_ROLE_ARN=$(terraform output -raw cognito_group_role_arn | tr -d '\r\n')
+        else
+          COGNITO_GROUP_ROLE_ARN=""
+        fi
 
         # Set outputs
         echo "user_pool_id=$USER_POOL_ID" >> "$GITHUB_OUTPUT"
@@ -416,6 +449,8 @@ runs:
         echo "hosted_ui_url=$HOSTED_UI_URL" >> "$GITHUB_OUTPUT"
         echo "supported_identity_providers=$SUPPORTED_IDENTITY_PROVIDERS" >> "$GITHUB_OUTPUT"
         echo "self_registration_enabled=$SELF_REGISTRATION_ENABLED" >> "$GITHUB_OUTPUT"
+        echo "cognito_group_name=$COGNITO_GROUP_NAME" >> "$GITHUB_OUTPUT"
+        echo "cognito_group_role_arn=$COGNITO_GROUP_ROLE_ARN" >> "$GITHUB_OUTPUT"
       shell: bash
       working-directory: ${{ github.action_path }}
       env:
@@ -434,6 +469,7 @@ runs:
         TF_VAR_favicon_asset_path: ${{ inputs.favicon_asset_path && format('{0}/{1}', github.workspace, inputs.favicon_asset_path) || '' }}
         TF_VAR_admin_email: ${{ inputs.admin_email }}
         TF_VAR_case_sensitive: ${{ inputs.case_sensitive }}
+        TF_VAR_permissions: ${{ inputs.permissions }}
 
     - name: Set final outputs
       id: outputs
@@ -454,6 +490,8 @@ runs:
           echo "hosted_ui_url=destroyed" >> "$GITHUB_OUTPUT"
           echo "supported_identity_providers=destroyed" >> "$GITHUB_OUTPUT"
           echo "self_registration_enabled=destroyed" >> "$GITHUB_OUTPUT"
+          echo "cognito_group_name=destroyed" >> "$GITHUB_OUTPUT"
+          echo "cognito_group_role_arn=destroyed" >> "$GITHUB_OUTPUT"
         elif [ "${{ inputs.action }}" == "apply" ]; then
           # Use outputs from apply step or skipped step
           if [ "${{ steps.terraform.conclusion }}" == "success" ]; then
@@ -471,6 +509,8 @@ runs:
             echo "hosted_ui_url=${{ steps.terraform.outputs.hosted_ui_url }}" >> "$GITHUB_OUTPUT"
             echo "supported_identity_providers=${{ steps.terraform.outputs.supported_identity_providers }}" >> "$GITHUB_OUTPUT"
             echo "self_registration_enabled=${{ steps.terraform.outputs.self_registration_enabled }}" >> "$GITHUB_OUTPUT"
+            echo "cognito_group_name=${{ steps.terraform.outputs.cognito_group_name }}" >> "$GITHUB_OUTPUT"
+            echo "cognito_group_role_arn=${{ steps.terraform.outputs.cognito_group_role_arn }}" >> "$GITHUB_OUTPUT"
           elif [ "${{ steps.terraform_skipped.conclusion }}" == "success" ]; then
             # Use outputs from skipped step
             echo "user_pool_id=${{ steps.terraform_skipped.outputs.user_pool_id }}" >> "$GITHUB_OUTPUT"
@@ -486,6 +526,8 @@ runs:
             echo "hosted_ui_url=${{ steps.terraform_skipped.outputs.hosted_ui_url }}" >> "$GITHUB_OUTPUT"
             echo "supported_identity_providers=${{ steps.terraform_skipped.outputs.supported_identity_providers }}" >> "$GITHUB_OUTPUT"
             echo "self_registration_enabled=${{ steps.terraform_skipped.outputs.self_registration_enabled }}" >> "$GITHUB_OUTPUT"
+            echo "cognito_group_name=${{ steps.terraform_skipped.outputs.cognito_group_name }}" >> "$GITHUB_OUTPUT"
+            echo "cognito_group_role_arn=${{ steps.terraform_skipped.outputs.cognito_group_role_arn }}" >> "$GITHUB_OUTPUT"
           fi
         else
           # For plan action, set placeholder values
@@ -502,4 +544,6 @@ runs:
           echo "hosted_ui_url=planned" >> "$GITHUB_OUTPUT"
           echo "supported_identity_providers=planned" >> "$GITHUB_OUTPUT"
           echo "self_registration_enabled=planned" >> "$GITHUB_OUTPUT"
+          echo "cognito_group_name=planned" >> "$GITHUB_OUTPUT"
+          echo "cognito_group_role_arn=planned" >> "$GITHUB_OUTPUT"
         fi

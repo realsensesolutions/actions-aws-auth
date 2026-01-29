@@ -74,6 +74,27 @@ locals {
   ] : []
 
   allowed_domains_enabled = trimspace(var.allowed_domains) != ""
+
+  # Parse permissions from YAML
+  permissions_map = length(var.permissions) > 0 ? yamldecode(var.permissions) : {}
+
+  # Services and their corresponding policies
+  services = {
+    s3 = {
+      read  = ["arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"]
+      write = ["arn:aws:iam::aws:policy/AmazonS3FullAccess"]
+    }
+  }
+
+  # Process permissions to get list of policy ARNs
+  service_policies = length(var.permissions) > 0 ? flatten([
+    for service, access_level in local.permissions_map :
+    lookup(local.services, service, null) != null ?
+    lookup(lookup(local.services, service, {}), access_level, []) : []
+  ]) : []
+
+  # Check if permissions are provided
+  permissions_enabled = length(var.permissions) > 0 && trimspace(var.permissions) != ""
 }
 
 # Package allowed domains Lambda (only when domains are provided)
@@ -344,6 +365,46 @@ resource "aws_cognito_user_pool_client" "this" {
   ]
 }
 
+# Create IAM role for Cognito group (only if permissions are provided)
+resource "aws_iam_role" "cognito_group_role" {
+  count = local.permissions_enabled ? 1 : 0
+
+  name = substr("${local.sanitized_user_pool_name}-cognito-group-role-${random_id.suffix.hex}", 0, 64)
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Federated = "cognito-idp.${data.aws_region.current.name}.amazonaws.com/${aws_cognito_user_pool.this.id}"
+      }
+      Action = "sts:AssumeRoleWithWebIdentity"
+      Condition = {
+        StringEquals = {
+          "cognito-idp.${data.aws_region.current.name}.amazonaws.com/${aws_cognito_user_pool.this.id}:aud" = aws_cognito_user_pool_client.this.id
+        }
+      }
+    }]
+  })
+}
+
+# Attach AWS managed policies to the Cognito group role
+resource "aws_iam_role_policy_attachment" "cognito_group_policies" {
+  for_each = local.permissions_enabled ? { for arn in local.service_policies : replace(basename(arn), ":", "_") => arn } : {}
+
+  role       = aws_iam_role.cognito_group_role[0].name
+  policy_arn = each.value
+}
+
+# Create Cognito User Pool Group with IAM role (only if permissions are provided)
+resource "aws_cognito_user_group" "this" {
+  count = local.permissions_enabled ? 1 : 0
+
+  name         = "${local.sanitized_user_pool_name}-group"
+  user_pool_id = aws_cognito_user_pool.this.id
+  role_arn     = aws_iam_role.cognito_group_role[0].arn
+  description  = "Cognito group with IAM role for permissions"
+}
 
 # Create User Pool Domain with managed login support
 resource "aws_cognito_user_pool_domain" "this" {

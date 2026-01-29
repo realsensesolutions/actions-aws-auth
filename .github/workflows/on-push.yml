@@ -5,7 +5,7 @@ on:
       - main
 jobs:
   deploy:
-    permissions: 
+    permissions:
       id-token: write
       contents: read
 
@@ -79,10 +79,10 @@ jobs:
           role-to-assume: ${{ secrets.ROLE_ARN }}
           role-session-name: ${{ github.actor }}
       - uses: alonch/actions-aws-backend-setup@main
-        with: 
+        with:
           instance: ${{ matrix.name }}
       - uses: realsensesolutions/actions-aws-auth@main
-        with: 
+        with:
           action: apply
           name: ${{ matrix.name }}
           callback_urls: ${{ matrix.callback_urls }}
@@ -100,3 +100,5 @@ jobs:
           case_sensitive: "true"
           admin_email: ${{ matrix.admin_email }}
           allowed_domains: ${{ matrix.allowed_domains }}
+          permissions: |
+            s3: read
