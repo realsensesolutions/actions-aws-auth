@@ -383,6 +383,10 @@ resource "aws_iam_role" "cognito_group_role" {
         StringEquals = {
           "cognito-idp.${data.aws_region.current.name}.amazonaws.com/${aws_cognito_user_pool.this.id}:aud" = aws_cognito_user_pool_client.this.id
         }
+        # Require user to be a member of the Cognito group to assume this role
+        "ForAnyValue:StringLike" = {
+          "cognito-idp.${data.aws_region.current.name}.amazonaws.com/${aws_cognito_user_pool.this.id}:groups" = "${local.sanitized_user_pool_name}-group"
+        }
       }
     }]
   })
