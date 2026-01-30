@@ -94,3 +94,8 @@ output "cognito_group_role_arn" {
   description = "ARN of the IAM role attached to the Cognito group (if permissions are provided)"
   value       = local.permissions_enabled ? aws_iam_role.cognito_group_role[0].arn : null
 }
+
+output "cognito_oidc_provider_arn" {
+  description = "ARN of the IAM OIDC provider for the Cognito User Pool (if permissions are provided)"
+  value       = local.permissions_enabled ? aws_iam_openid_connect_provider.cognito[0].arn : null
+}

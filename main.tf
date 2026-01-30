@@ -365,6 +365,25 @@ resource "aws_cognito_user_pool_client" "this" {
   ]
 }
 
+# Get the TLS certificate for the Cognito User Pool OIDC endpoint
+data "tls_certificate" "cognito" {
+  count = local.permissions_enabled ? 1 : 0
+  url   = "https://cognito-idp.${data.aws_region.current.name}.amazonaws.com/${aws_cognito_user_pool.this.id}"
+}
+
+# Create IAM OIDC Provider for the Cognito User Pool (required for AssumeRoleWithWebIdentity)
+resource "aws_iam_openid_connect_provider" "cognito" {
+  count = local.permissions_enabled ? 1 : 0
+
+  url             = "https://cognito-idp.${data.aws_region.current.name}.amazonaws.com/${aws_cognito_user_pool.this.id}"
+  client_id_list  = [aws_cognito_user_pool_client.this.id]
+  thumbprint_list = [data.tls_certificate.cognito[0].certificates[0].sha1_fingerprint]
+
+  tags = {
+    Name = "${local.sanitized_user_pool_name}-oidc-provider"
+  }
+}
+
 # Create IAM role for Cognito group (only if permissions are provided)
 resource "aws_iam_role" "cognito_group_role" {
   count = local.permissions_enabled ? 1 : 0
@@ -376,21 +395,23 @@ resource "aws_iam_role" "cognito_group_role" {
     Statement = [{
       Effect = "Allow"
       Principal = {
-        Federated = "cognito-idp.${data.aws_region.current.name}.amazonaws.com/${aws_cognito_user_pool.this.id}"
+        Federated = aws_iam_openid_connect_provider.cognito[0].arn
       }
       Action = "sts:AssumeRoleWithWebIdentity"
       Condition = {
         StringEquals = {
-          "cognito-idp.${data.aws_region.current.name}.amazonaws.com/${aws_cognito_user_pool.this.id}:aud" = aws_cognito_user_pool_client.this.id
+          "${aws_iam_openid_connect_provider.cognito[0].url}:aud" = aws_cognito_user_pool_client.this.id
         }
         # Require user to be a member of the Cognito group to assume this role
         # The JWT claim is "cognito:groups", so the condition key includes that
         "ForAnyValue:StringEquals" = {
-          "cognito-idp.${data.aws_region.current.name}.amazonaws.com/${aws_cognito_user_pool.this.id}:cognito:groups" = "${local.sanitized_user_pool_name}-group"
+          "${aws_iam_openid_connect_provider.cognito[0].url}:cognito:groups" = "${local.sanitized_user_pool_name}-group"
         }
       }
     }]
   })
+
+  depends_on = [aws_iam_openid_connect_provider.cognito]
 }
 
 # Attach AWS managed policies to the Cognito group role
