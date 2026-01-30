@@ -385,6 +385,10 @@ resource "aws_iam_openid_connect_provider" "cognito" {
 }
 
 # Create IAM role for Cognito group (only if permissions are provided)
+# Note: AWS STS AssumeRoleWithWebIdentity does NOT support custom OIDC claims like cognito:groups
+# in trust policy conditions. Group-based access control must be implemented at the application layer.
+# The Cognito group is still created and users can be added to it, but the IAM role can be assumed
+# by any authenticated user from this Cognito User Pool.
 resource "aws_iam_role" "cognito_group_role" {
   count = local.permissions_enabled ? 1 : 0
 
@@ -401,11 +405,6 @@ resource "aws_iam_role" "cognito_group_role" {
       Condition = {
         StringEquals = {
           "${aws_iam_openid_connect_provider.cognito[0].url}:aud" = aws_cognito_user_pool_client.this.id
-        }
-        # Require user to be a member of the Cognito group to assume this role
-        # The JWT claim is "cognito:groups", so the condition key includes that
-        "ForAnyValue:StringEquals" = {
-          "${aws_iam_openid_connect_provider.cognito[0].url}:cognito:groups" = "${local.sanitized_user_pool_name}-group"
         }
       }
     }]
