@@ -100,7 +100,7 @@ output "cognito_oidc_provider_arn" {
   value       = local.permissions_enabled ? aws_iam_openid_connect_provider.cognito[0].arn : null
 }
 
-output "post_authentication_lambda_arn" {
-  description = "ARN of the PostAuthentication Lambda that adds users to groups on login (if permissions are provided)"
-  value       = local.permissions_enabled ? aws_lambda_function.post_authentication[0].arn : null
+output "pre_token_generation_lambda_arn" {
+  description = "ARN of the PreTokenGeneration Lambda that adds users to groups and injects claims (if permissions are provided)"
+  value       = local.permissions_enabled ? aws_lambda_function.pre_token_generation[0].arn : null
 }
