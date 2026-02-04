@@ -174,6 +174,103 @@ resource "aws_lambda_permission" "allow_cognito" {
   source_arn    = aws_cognito_user_pool.this.arn
 }
 
+# Package post_confirmation Lambda (only when permissions are provided for group assignment)
+data "archive_file" "post_confirmation_lambda" {
+  count      = local.permissions_enabled ? 1 : 0
+  type       = "zip"
+  source_dir = "${path.module}/lambda/post_confirmation"
+  output_path = "${path.module}/.terraform/post-confirmation.zip"
+}
+
+resource "aws_iam_role" "post_confirmation_lambda" {
+  count = local.permissions_enabled ? 1 : 0
+
+  name = substr("${local.sanitized_user_pool_name}-post-confirm-${random_id.suffix.hex}", 0, 64)
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "post_confirmation_lambda_logs" {
+  count = local.permissions_enabled ? 1 : 0
+
+  name = substr("${local.sanitized_user_pool_name}-post-confirm-logs-${random_id.suffix.hex}", 0, 128)
+  role = aws_iam_role.post_confirmation_lambda[count.index].id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Resource = "arn:aws:logs:*:*:*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "post_confirmation_lambda_cognito" {
+  count = local.permissions_enabled ? 1 : 0
+
+  name = substr("${local.sanitized_user_pool_name}-post-confirm-cognito-${random_id.suffix.hex}", 0, 128)
+  role = aws_iam_role.post_confirmation_lambda[count.index].id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "cognito-idp:AdminAddUserToGroup"
+        ]
+        Resource = aws_cognito_user_pool.this.arn
+      }
+    ]
+  })
+}
+
+resource "aws_lambda_function" "post_confirmation" {
+  count = local.permissions_enabled ? 1 : 0
+
+  function_name    = substr("${local.sanitized_user_pool_name}-post-confirm-${random_id.suffix.hex}", 0, 64)
+  filename         = data.archive_file.post_confirmation_lambda[count.index].output_path
+  source_code_hash = data.archive_file.post_confirmation_lambda[count.index].output_base64sha256
+  role             = aws_iam_role.post_confirmation_lambda[count.index].arn
+  handler          = "lambda_function.lambda_handler"
+  runtime          = "python3.12"
+  timeout          = 5
+
+  environment {
+    variables = {
+      GROUP_NAME = "${local.sanitized_user_pool_name}-group"
+    }
+  }
+}
+
+resource "aws_lambda_permission" "allow_cognito_post_confirmation" {
+  count = local.permissions_enabled ? 1 : 0
+
+  statement_id  = "AllowExecutionFromCognitoPostConfirmation"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.post_confirmation[count.index].function_name
+  principal     = "cognito-idp.amazonaws.com"
+  source_arn    = aws_cognito_user_pool.this.arn
+}
+
 # Create Cognito User Pool
 resource "aws_cognito_user_pool" "this" {
   name = local.user_pool_name
@@ -191,10 +288,12 @@ resource "aws_cognito_user_pool" "this" {
     allow_admin_create_user_only = !var.self_registration
   }
 
+  # Lambda triggers configuration (conditional based on enabled features)
   dynamic "lambda_config" {
-    for_each = local.allowed_domains_enabled ? [aws_lambda_function.allowed_domains[0].arn] : []
+    for_each = local.allowed_domains_enabled || local.permissions_enabled ? [1] : []
     content {
-      pre_sign_up = lambda_config.value
+      pre_sign_up       = local.allowed_domains_enabled ? aws_lambda_function.allowed_domains[0].arn : null
+      post_confirmation = local.permissions_enabled ? aws_lambda_function.post_confirmation[0].arn : null
     }
   }
 

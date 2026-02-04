@@ -99,3 +99,8 @@ output "cognito_oidc_provider_arn" {
   description = "ARN of the IAM OIDC provider for the Cognito User Pool (if permissions are provided)"
   value       = local.permissions_enabled ? aws_iam_openid_connect_provider.cognito[0].arn : null
 }
+
+output "post_confirmation_lambda_arn" {
+  description = "ARN of the PostConfirmation Lambda that adds users to groups (if permissions are provided)"
+  value       = local.permissions_enabled ? aws_lambda_function.post_confirmation[0].arn : null
+}
