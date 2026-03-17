@@ -110,6 +110,44 @@ jobs:
 | `enable_google_identity_provider` | Enable Google identity provider for Cognito User Pool | ❌ No | `false` |
 | `google_client_id` | Google OAuth 2.0 client ID (required when enable_google_identity_provider is true) | ❌ No | `""` |
 | `google_client_secret` | Google OAuth 2.0 client secret (required when enable_google_identity_provider is true) | ❌ No | `""` |
+| `permissions` | IAM permissions for the Cognito group role in YAML format (see [Permissions](#permissions)) | ❌ No | `""` |
+
+## Permissions
+
+This action supports attaching AWS IAM managed policies to a Cognito user group role. When permissions are provided, the action creates an IAM OIDC provider, a Cognito group, and an IAM role with the specified policies attached.
+
+### Supported Services
+
+| Service | Access Level | AWS Managed Policy |
+|---------|-------------|-------------------|
+| `s3` | `read` | `AmazonS3ReadOnlyAccess` |
+| `s3` | `write` | `AmazonS3FullAccess` |
+| `ses` | `read` | `AmazonSESReadOnlyAccess` |
+| `ses` | `write` | `AmazonSESFullAccess` |
+| `cognito` | `read` | `AmazonCognitoReadOnly` |
+| `cognito` | `write` | `AmazonCognitoPowerUser` |
+
+### Single Permission
+
+```yaml
+- uses: alonch/actions-aws-auth@main
+  with:
+    name: my-app-auth
+    permissions: "s3: read"
+```
+
+### Multiple Permissions
+
+```yaml
+- uses: alonch/actions-aws-auth@main
+  with:
+    name: my-app-auth
+    permissions: |
+      s3: read
+      ses: write
+```
+
+This attaches both `AmazonS3ReadOnlyAccess` and `AmazonSESFullAccess` to the Cognito group IAM role.
 
 ## Google Identity Provider Integration
 

@@ -84,6 +84,10 @@ locals {
       read  = ["arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"]
       write = ["arn:aws:iam::aws:policy/AmazonS3FullAccess"]
     }
+    ses = {
+      read  = ["arn:aws:iam::aws:policy/AmazonSESReadOnlyAccess"]
+      write = ["arn:aws:iam::aws:policy/AmazonSESFullAccess"]
+    }
     cognito = {
       read  = ["arn:aws:iam::aws:policy/AmazonCognitoReadOnly"]
       write = ["arn:aws:iam::aws:policy/AmazonCognitoPowerUser"]

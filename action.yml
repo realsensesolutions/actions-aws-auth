@@ -70,7 +70,7 @@ inputs:
     required: false
     default: "true"
   permissions:
-    description: 'List of permissions following Github standard of service: read or write. In YML format (e.g., "s3: write\ndynamodb: read")'
+    description: 'List of permissions following Github standard of service: read or write. Supported services: s3, ses, cognito. In YML format (e.g., "s3: write\nses: read\ncognito: write")'
     required: false
     default: ""
 
